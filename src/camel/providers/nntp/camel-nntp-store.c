@@ -1140,7 +1140,8 @@ store_info_remove (gpointer key,
 
 static gint
 store_info_sort (gconstpointer a,
-                 gconstpointer b)
+		 gconstpointer b,
+		 gpointer user_data)
 {
 	return strcmp ((*(CamelNNTPStoreInfo **) a)->full_name, (*(CamelNNTPStoreInfo **) b)->full_name);
 }
@@ -1276,9 +1277,8 @@ nntp_store_get_folder_info_all (CamelNNTPStore *nntp_store,
 		}
 
 		/* sort the list */
-		g_ptr_array_sort (
-			CAMEL_STORE_SUMMARY (nntp_store_summary)->folders,
-			store_info_sort);
+		camel_store_summary_sort (CAMEL_STORE_SUMMARY (nntp_store_summary), store_info_sort, NULL);
+
 		if (ret < 0)
 			goto error;
 

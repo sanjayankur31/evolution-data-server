@@ -76,9 +76,6 @@ struct _CamelStoreInfo {
 struct _CamelStoreSummary {
 	GObject parent;
 	CamelStoreSummaryPrivate *priv;
-
-	GPtrArray *folders;	/* CamelStoreInfo's */
-	GHashTable *folders_path; /* CamelStoreInfo's by path name */
 };
 
 struct _CamelStoreSummaryClass {
@@ -174,6 +171,9 @@ const gchar *	camel_store_info_path		(CamelStoreSummary *summary,
 						 CamelStoreInfo *info);
 const gchar *	camel_store_info_name		(CamelStoreSummary *summary,
 						 CamelStoreInfo *info);
+void		camel_store_summary_sort	(CamelStoreSummary *summary,
+						 GCompareDataFunc compare_func,
+						 gpointer user_data);
 
 gboolean	camel_store_summary_connect_folder_summary
 						(CamelStoreSummary *summary,
