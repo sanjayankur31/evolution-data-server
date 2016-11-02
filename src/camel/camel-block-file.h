@@ -112,22 +112,6 @@ struct _CamelBlock {
 struct _CamelBlockFile {
 	GObject parent;
 	CamelBlockFilePrivate *priv;
-
-	gchar version[8];
-	gchar *path;
-	CamelBlockFileFlags flags;
-
-	gint fd;
-	gsize block_size;
-
-	CamelBlockRoot *root;
-	CamelBlock *root_block;
-
-	/* make private? */
-	gint block_cache_limit;
-	gint block_cache_count;
-	GQueue block_cache;
-	GHashTable *blocks;
 };
 
 struct _CamelBlockFileClass {
@@ -145,6 +129,11 @@ CamelBlockFile *camel_block_file_new		(const gchar *path,
 						 gint flags,
 						 const gchar version[8],
 						 gsize block_size);
+CamelBlockRoot *camel_block_file_get_root	(CamelBlockFile *bs);
+CamelBlock *	camel_block_file_get_root_block	(CamelBlockFile *bs);
+gint		camel_block_file_get_cache_limit(CamelBlockFile *bs);
+void		camel_block_file_set_cache_limit(CamelBlockFile *bs,
+						 gint block_cache_limit);
 gint		camel_block_file_rename		(CamelBlockFile *bs,
 						 const gchar *path);
 gint		camel_block_file_delete		(CamelBlockFile *kf);
@@ -174,11 +163,6 @@ typedef struct _CamelKeyFilePrivate CamelKeyFilePrivate;
 struct _CamelKeyFile {
 	GObject parent;
 	CamelKeyFilePrivate *priv;
-
-	FILE *fp;
-	gchar *path;
-	gint flags;
-	goffset last;
 };
 
 struct _CamelKeyFileClass {
