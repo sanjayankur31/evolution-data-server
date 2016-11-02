@@ -567,7 +567,7 @@ imapx_store_process_mailbox_status (CamelIMAPXStore *imapx_store,
 		guint32 uidvalidity;
 
 		imapx_folder = CAMEL_IMAPX_FOLDER (folder);
-		imapx_summary = CAMEL_IMAPX_SUMMARY (folder->summary);
+		imapx_summary = CAMEL_IMAPX_SUMMARY (camel_folder_get_folder_summary (folder));
 
 		uidvalidity = camel_imapx_mailbox_get_uidvalidity (mailbox);
 
@@ -954,8 +954,8 @@ fill_fi (CamelStore *store,
 		CamelIMAPXSummary *ims;
 		CamelIMAPXMailbox *mailbox;
 
-		if (folder->summary)
-			ims = (CamelIMAPXSummary *) folder->summary;
+		if (camel_folder_get_folder_summary (folder))
+			ims = CAMEL_IMAPX_SUMMARY (camel_folder_get_folder_summary (folder));
 		else
 			ims = (CamelIMAPXSummary *) camel_imapx_summary_new (folder);
 
@@ -967,7 +967,7 @@ fill_fi (CamelStore *store,
 
 		g_clear_object (&mailbox);
 
-		if (!folder->summary)
+		if (!camel_folder_get_folder_summary (folder))
 			g_object_unref (ims);
 		g_object_unref (folder);
 	}
@@ -1048,8 +1048,8 @@ get_folder_info_offline (CamelStore *store,
 			return NULL;
 
 		fi = imapx_store_build_folder_info (imapx_store, top, 0);
-		fi->unread = camel_folder_summary_get_unread_count (vfolder->summary);
-		fi->total = camel_folder_summary_get_saved_count (vfolder->summary);
+		fi->unread = camel_folder_summary_get_unread_count (camel_folder_get_folder_summary (vfolder));
+		fi->total = camel_folder_summary_get_saved_count (camel_folder_get_folder_summary (vfolder));
 
 		if (g_strcmp0 (top, CAMEL_VTRASH_NAME) == 0)
 			fi->flags = (fi->flags & ~CAMEL_FOLDER_TYPE_MASK) |
@@ -1792,7 +1792,7 @@ imapx_store_get_folder_sync (CamelStore *store,
 			real_junk_path = g_strdup ("");
 
 		if (g_ascii_strcasecmp (real_junk_path, folder_name) == 0)
-			folder->folder_flags |= CAMEL_FOLDER_IS_JUNK;
+			camel_folder_set_flags (folder, camel_folder_get_flags (folder) | CAMEL_FOLDER_IS_JUNK);
 
 		g_free (real_junk_path);
 	}
@@ -1809,7 +1809,7 @@ imapx_store_get_folder_sync (CamelStore *store,
 			real_trash_path = g_strdup ("");
 
 		if (g_ascii_strcasecmp (real_trash_path, folder_name) == 0)
-			folder->folder_flags |= CAMEL_FOLDER_IS_TRASH;
+			camel_folder_set_flags (folder, camel_folder_get_flags (folder) | CAMEL_FOLDER_IS_TRASH);
 
 		g_free (real_trash_path);
 	}

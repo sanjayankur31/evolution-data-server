@@ -77,7 +77,7 @@ message_info_from_uid (CamelFolderSummary *s,
 		g_return_val_if_fail (orig_folder != NULL, NULL);
 
 		/* Create the info and load it, its so easy. */
-		info = camel_vee_message_info_new (s, orig_folder->summary, uid);
+		info = camel_vee_message_info_new (s, camel_folder_get_folder_summary (orig_folder), uid);
 
 		camel_message_info_set_dirty (info, FALSE);
 
@@ -181,7 +181,7 @@ camel_vee_summary_get_uids_for_subfolder (CamelVeeSummary *summary,
 	g_return_val_if_fail (CAMEL_IS_VEE_SUMMARY (summary), NULL);
 	g_return_val_if_fail (CAMEL_IS_FOLDER (subfolder), NULL);
 
-	camel_folder_summary_lock (&summary->summary);
+	camel_folder_summary_lock (CAMEL_FOLDER_SUMMARY (summary));
 
 	/* uses direct hash, because strings are supposed to be from the string pool */
 	known_uids = g_hash_table_new_full (g_direct_hash, g_direct_equal, (GDestroyNotify) camel_pstring_free, NULL);
@@ -191,14 +191,14 @@ camel_vee_summary_get_uids_for_subfolder (CamelVeeSummary *summary,
 		g_hash_table_foreach (vuids, get_uids_for_subfolder, known_uids);
 	}
 
-	camel_folder_summary_unlock (&summary->summary);
+	camel_folder_summary_unlock (CAMEL_FOLDER_SUMMARY (summary));
 
 	return known_uids;
 }
 
 /**
  * camel_vee_summary_add:
- * @s: the CamelVeeSummary
+ * @summary: the CamelVeeSummary
  * @mi_data: (type CamelVeeMessageInfoData): the #CamelVeeMessageInfoData to add
  *
  * Unref returned pointer with g_object_unref()
@@ -206,7 +206,7 @@ camel_vee_summary_get_uids_for_subfolder (CamelVeeSummary *summary,
  * Returns: (transfer full): A new #CamelVeeMessageInfo object.
  **/
 CamelVeeMessageInfo *
-camel_vee_summary_add (CamelVeeSummary *s,
+camel_vee_summary_add (CamelVeeSummary *summary,
                        CamelVeeMessageInfoData *mi_data)
 {
 	CamelVeeMessageInfo *vmi;
@@ -215,39 +215,39 @@ camel_vee_summary_add (CamelVeeSummary *s,
 	CamelFolder *orig_folder;
 	GHashTable *vuids;
 
-	g_return_val_if_fail (CAMEL_IS_VEE_SUMMARY (s), NULL);
+	g_return_val_if_fail (CAMEL_IS_VEE_SUMMARY (summary), NULL);
 	g_return_val_if_fail (CAMEL_IS_VEE_MESSAGE_INFO_DATA (mi_data), NULL);
 
-	camel_folder_summary_lock (&s->summary);
+	camel_folder_summary_lock (CAMEL_FOLDER_SUMMARY (summary));
 
 	sf_data = camel_vee_message_info_data_get_subfolder_data (mi_data);
 	vuid = camel_vee_message_info_data_get_vee_message_uid (mi_data);
 	orig_folder = camel_vee_subfolder_data_get_folder (sf_data);
 
-	vmi = (CamelVeeMessageInfo *) camel_folder_summary_peek_loaded (&s->summary, vuid);
+	vmi = (CamelVeeMessageInfo *) camel_folder_summary_peek_loaded (CAMEL_FOLDER_SUMMARY (summary), vuid);
 	if (vmi) {
 		/* Possible that the entry is loaded, see if it has the summary */
 		d (g_message ("%s - already there\n", vuid));
 		g_warn_if_fail (camel_vee_message_info_get_original_summary (vmi) != NULL);
 
-		camel_folder_summary_unlock (&s->summary);
+		camel_folder_summary_unlock (CAMEL_FOLDER_SUMMARY (summary));
 
 		return vmi;
 	}
 
-	vmi = (CamelVeeMessageInfo *) camel_vee_message_info_new (CAMEL_FOLDER_SUMMARY (s), orig_folder->summary, vuid);
+	vmi = (CamelVeeMessageInfo *) camel_vee_message_info_new (CAMEL_FOLDER_SUMMARY (summary), camel_folder_get_folder_summary (orig_folder), vuid);
 
-	vuids = g_hash_table_lookup (s->priv->vuids_by_subfolder, orig_folder);
+	vuids = g_hash_table_lookup (summary->priv->vuids_by_subfolder, orig_folder);
 	if (vuids) {
 		g_hash_table_insert (vuids, (gpointer) camel_pstring_strdup (vuid), GINT_TO_POINTER (1));
 	} else {
 		vuids = g_hash_table_new_full (g_direct_hash, g_direct_equal, (GDestroyNotify) camel_pstring_free, NULL);
 		g_hash_table_insert (vuids, (gpointer) camel_pstring_strdup (vuid), GINT_TO_POINTER (1));
-		g_hash_table_insert (s->priv->vuids_by_subfolder, orig_folder, vuids);
+		g_hash_table_insert (summary->priv->vuids_by_subfolder, orig_folder, vuids);
 	}
 
-	camel_folder_summary_add (&s->summary, (CamelMessageInfo *) vmi, TRUE);
-	camel_folder_summary_unlock (&s->summary);
+	camel_folder_summary_add (CAMEL_FOLDER_SUMMARY (summary), (CamelMessageInfo *) vmi, TRUE);
+	camel_folder_summary_unlock (CAMEL_FOLDER_SUMMARY (summary));
 
 	return vmi;
 }
@@ -271,7 +271,7 @@ camel_vee_summary_remove (CamelVeeSummary *summary,
 	g_return_if_fail (vuid != NULL);
 	g_return_if_fail (subfolder != NULL);
 
-	camel_folder_summary_lock (&summary->summary);
+	camel_folder_summary_lock (CAMEL_FOLDER_SUMMARY (summary));
 
 	vuids = g_hash_table_lookup (summary->priv->vuids_by_subfolder, subfolder);
 	if (vuids) {
@@ -280,9 +280,9 @@ camel_vee_summary_remove (CamelVeeSummary *summary,
 			g_hash_table_remove (summary->priv->vuids_by_subfolder, subfolder);
 	}
 
-	mi = camel_folder_summary_peek_loaded (&summary->summary, vuid);
+	mi = camel_folder_summary_peek_loaded (CAMEL_FOLDER_SUMMARY (summary), vuid);
 
-	camel_folder_summary_remove_uid (&summary->summary, vuid);
+	camel_folder_summary_remove_uid (CAMEL_FOLDER_SUMMARY (summary), vuid);
 
 	if (mi) {
 		/* under twice, the first for camel_folder_summary_peek_loaded(),
@@ -291,7 +291,7 @@ camel_vee_summary_remove (CamelVeeSummary *summary,
 		g_clear_object (&mi);
 	}
 
-	camel_folder_summary_unlock (&summary->summary);
+	camel_folder_summary_unlock (CAMEL_FOLDER_SUMMARY (summary));
 }
 
 /**
@@ -314,16 +314,16 @@ camel_vee_summary_replace_flags (CamelVeeSummary *summary,
 	g_return_if_fail (CAMEL_IS_VEE_SUMMARY (summary));
 	g_return_if_fail (uid != NULL);
 
-	camel_folder_summary_lock (&summary->summary);
+	camel_folder_summary_lock (CAMEL_FOLDER_SUMMARY (summary));
 
-	mi = camel_folder_summary_get (&summary->summary, uid);
+	mi = camel_folder_summary_get (CAMEL_FOLDER_SUMMARY (summary), uid);
 	if (!mi) {
-		camel_folder_summary_unlock (&summary->summary);
+		camel_folder_summary_unlock (CAMEL_FOLDER_SUMMARY (summary));
 		return;
 	}
 
-	camel_folder_summary_replace_flags (&summary->summary, mi);
+	camel_folder_summary_replace_flags (CAMEL_FOLDER_SUMMARY (summary), mi);
 	g_clear_object (&mi);
 
-	camel_folder_summary_unlock (&summary->summary);
+	camel_folder_summary_unlock (CAMEL_FOLDER_SUMMARY (summary));
 }

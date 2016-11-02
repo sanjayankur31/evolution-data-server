@@ -55,10 +55,10 @@ mbox_folder_cmp_uids (CamelFolder *folder,
 	gint res;
 
 	g_return_val_if_fail (folder != NULL, 0);
-	g_return_val_if_fail (folder->summary != NULL, 0);
+	g_return_val_if_fail (camel_folder_get_folder_summary (folder) != NULL, 0);
 
-	a = (CamelMboxMessageInfo *) camel_folder_summary_get (folder->summary, uid1);
-	b = (CamelMboxMessageInfo *) camel_folder_summary_get (folder->summary, uid2);
+	a = (CamelMboxMessageInfo *) camel_folder_summary_get (camel_folder_get_folder_summary (folder), uid1);
+	b = (CamelMboxMessageInfo *) camel_folder_summary_get (camel_folder_get_folder_summary (folder), uid2);
 
 	if (!a || !b) {
 		/* It's not a problem when one of the messages is not in the summary */
@@ -93,7 +93,7 @@ mbox_folder_sort_uids (CamelFolder *folder,
 	g_return_if_fail (folder != NULL);
 
 	if (uids && uids->len > 1)
-		camel_folder_summary_prepare_fetch_all (folder->summary, NULL);
+		camel_folder_summary_prepare_fetch_all (camel_folder_get_folder_summary (folder), NULL);
 
 	CAMEL_FOLDER_CLASS (camel_mbox_folder_parent_class)->sort_uids (folder, uids);
 }
@@ -114,13 +114,13 @@ mbox_folder_get_filename (CamelFolder *folder,
 		return NULL;
 
 	/* check for new messages always */
-	if (camel_local_summary_check ((CamelLocalSummary *) folder->summary, lf->changes, NULL, error) == -1) {
+	if (camel_local_summary_check ((CamelLocalSummary *) camel_folder_get_folder_summary (folder), lf->changes, NULL, error) == -1) {
 		camel_local_folder_unlock (lf);
 		return NULL;
 	}
 
 	/* get the message summary info */
-	info = (CamelMboxMessageInfo *) camel_folder_summary_get (folder->summary, uid);
+	info = (CamelMboxMessageInfo *) camel_folder_summary_get (camel_folder_get_folder_summary (folder), uid);
 
 	if (info == NULL) {
 		set_cannot_get_message_ex (
@@ -153,7 +153,7 @@ mbox_folder_append_message_sync (CamelFolder *folder,
 	CamelLocalFolder *lf = (CamelLocalFolder *) folder;
 	CamelStream *output_stream = NULL, *filter_stream = NULL;
 	CamelMimeFilter *filter_from;
-	CamelMboxSummary *mbs = (CamelMboxSummary *) folder->summary;
+	CamelMboxSummary *mbs = (CamelMboxSummary *) camel_folder_get_folder_summary (folder);
 	CamelMessageInfo *mi = NULL;
 	gchar *fromline = NULL;
 	struct stat st;
@@ -169,12 +169,12 @@ mbox_folder_append_message_sync (CamelFolder *folder,
 	d (printf ("Appending message\n"));
 
 	/* first, check the summary is correct (updates folder_size too) */
-	retval = camel_local_summary_check ((CamelLocalSummary *) folder->summary, lf->changes, cancellable, error);
+	retval = camel_local_summary_check ((CamelLocalSummary *) camel_folder_get_folder_summary (folder), lf->changes, cancellable, error);
 	if (retval == -1)
 		goto fail;
 
 	/* add it to the summary/assign the uid, etc */
-	mi = camel_local_summary_add ((CamelLocalSummary *) folder->summary, message, info, lf->changes, error);
+	mi = camel_local_summary_add ((CamelLocalSummary *) camel_folder_get_folder_summary (folder), message, info, lf->changes, error);
 	if (mi == NULL)
 		goto fail;
 
@@ -199,7 +199,7 @@ mbox_folder_append_message_sync (CamelFolder *folder,
 	/* and we need to set the frompos/XEV explicitly */
 	camel_mbox_message_info_set_offset (CAMEL_MBOX_MESSAGE_INFO (mi), mbs->folder_size);
 #if 0
-	xev = camel_local_summary_encode_x_evolution ((CamelLocalSummary *) folder->summary, mi);
+	xev = camel_local_summary_encode_x_evolution ((CamelLocalSummary *) camel_folder_get_folder_summary (folder), mi);
 	if (xev) {
 		/* the x-ev header should match the 'current' flags, no problem, so store as much */
 		camel_medium_set_header ((CamelMedium *) message, "X-Evolution", xev);
@@ -321,14 +321,14 @@ mbox_folder_get_message_sync (CamelFolder *folder,
 		return NULL;
 
 	/* check for new messages always */
-	if (camel_local_summary_check ((CamelLocalSummary *) folder->summary, lf->changes, cancellable, error) == -1) {
+	if (camel_local_summary_check ((CamelLocalSummary *) camel_folder_get_folder_summary (folder), lf->changes, cancellable, error) == -1) {
 		camel_local_folder_unlock (lf);
 		return NULL;
 	}
 
 retry:
 	/* get the message summary info */
-	info = (CamelMboxMessageInfo *) camel_folder_summary_get (folder->summary, uid);
+	info = (CamelMboxMessageInfo *) camel_folder_summary_get (camel_folder_get_folder_summary (folder), uid);
 
 	if (info == NULL) {
 		set_cannot_get_message_ex (
@@ -375,8 +375,8 @@ retry:
 
 		if (!retried) {
 			retried = TRUE;
-			camel_local_summary_check_force ((CamelLocalSummary *) folder->summary);
-			retval = camel_local_summary_check ((CamelLocalSummary *) folder->summary, lf->changes, cancellable, error);
+			camel_local_summary_check_force ((CamelLocalSummary *) camel_folder_get_folder_summary (folder));
+			retval = camel_local_summary_check ((CamelLocalSummary *) camel_folder_get_folder_summary (folder), lf->changes, cancellable, error);
 			if (retval != -1)
 				goto retry;
 		}

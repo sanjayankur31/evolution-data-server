@@ -114,7 +114,7 @@ nntp_folder_dispose (GObject *object)
 	CamelStore *store;
 
 	folder = CAMEL_FOLDER (object);
-	camel_folder_summary_save_to_db (folder->summary, NULL);
+	camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
 
 	store = camel_folder_get_parent_store (folder);
 	if (store != NULL) {
@@ -124,7 +124,7 @@ nntp_folder_dispose (GObject *object)
 			CAMEL_NNTP_STORE (store));
 		camel_store_summary_disconnect_folder_summary (
 			CAMEL_STORE_SUMMARY (nntp_store_summary),
-			folder->summary);
+			camel_folder_get_folder_summary (folder));
 		g_clear_object (&nntp_store_summary);
 	}
 
@@ -163,7 +163,7 @@ camel_nntp_folder_selected (CamelNNTPFolder *nntp_folder,
 	parent_store = camel_folder_get_parent_store (folder);
 
 	res = camel_nntp_summary_check (
-		CAMEL_NNTP_SUMMARY (folder->summary),
+		CAMEL_NNTP_SUMMARY (camel_folder_get_folder_summary (folder)),
 		CAMEL_NNTP_STORE (parent_store),
 		line, nntp_folder->changes,
 		cancellable, error);
@@ -521,7 +521,7 @@ nntp_folder_expunge_sync (CamelFolder *folder,
 	GPtrArray *known_uids;
 	guint ii;
 
-	summary = folder->summary;
+	summary = camel_folder_get_folder_summary (folder);
 
 	camel_folder_summary_prepare_fetch_all (summary, NULL);
 	known_uids = camel_folder_summary_get_array (summary);
@@ -689,7 +689,7 @@ nntp_folder_synchronize_sync (CamelFolder *folder,
 			return FALSE;
 	}
 
-	summary = folder->summary;
+	summary = camel_folder_get_folder_summary (folder);
 
 	changed = camel_folder_summary_get_changed (summary);
 	if (changed != NULL) {
@@ -807,7 +807,7 @@ camel_nntp_folder_new (CamelStore *parent,
 		"parent-store", parent, NULL);
 	nntp_folder = (CamelNNTPFolder *) folder;
 
-	folder->folder_flags |= CAMEL_FOLDER_HAS_SUMMARY_CAPABILITY;
+	camel_folder_set_flags (folder, camel_folder_get_flags (folder) | CAMEL_FOLDER_HAS_SUMMARY_CAPABILITY);
 
 	storage_path = g_build_filename (user_cache_dir, folder_name, NULL);
 	root = g_strdup_printf ("%s.cmeta", storage_path);
@@ -816,12 +816,12 @@ camel_nntp_folder_new (CamelStore *parent,
 	g_free (root);
 	g_free (storage_path);
 
-	folder->summary = (CamelFolderSummary *) camel_nntp_summary_new (folder);
+	camel_folder_take_folder_summary (folder, (CamelFolderSummary *) camel_nntp_summary_new (folder));
 
 	if (filter_all || nntp_folder_get_apply_filters (nntp_folder))
-		folder->folder_flags |= CAMEL_FOLDER_FILTER_RECENT;
+		camel_folder_set_flags (folder, camel_folder_get_flags (folder) | CAMEL_FOLDER_FILTER_RECENT);
 
-	camel_folder_summary_load_from_db (folder->summary, NULL);
+	camel_folder_summary_load_from_db (camel_folder_get_folder_summary (folder), NULL);
 
 	nntp_store = CAMEL_NNTP_STORE (parent);
 	nntp_store_summary = camel_nntp_store_ref_summary (nntp_store);
@@ -837,7 +837,7 @@ camel_nntp_folder_new (CamelStore *parent,
 
 	camel_store_summary_connect_folder_summary (
 		CAMEL_STORE_SUMMARY (nntp_store_summary),
-		folder_name, folder->summary);
+		folder_name, camel_folder_get_folder_summary (folder));
 
 	g_clear_object (&nntp_store_summary);
 

@@ -882,13 +882,13 @@ folder_search_match_all (CamelSExp *sexp,
 	v = search->summary_set ? search->summary_set : search->summary;
 
 	if (!CAMEL_IS_VEE_FOLDER (search->folder)) {
-		camel_folder_summary_prepare_fetch_all (search->folder->summary, search->priv->error);
+		camel_folder_summary_prepare_fetch_all (camel_folder_get_folder_summary (search->folder), search->priv->error);
 	}
 
 	for (i = 0; i < v->len && !g_cancellable_is_cancelled (search->priv->cancellable); i++) {
 		const gchar *uid;
 
-		search->current = camel_folder_summary_get (search->folder->summary, v->pdata[i]);
+		search->current = camel_folder_summary_get (camel_folder_get_folder_summary (search->folder), v->pdata[i]);
 		if (!search->current)
 			continue;
 		uid = camel_message_info_get_uid (search->current);
@@ -1817,8 +1817,8 @@ do_search_in_memory (CamelFolder *search_in_folder,
 	gint i;
 
 	if (search_in_folder &&
-	    search_in_folder->summary &&
-	    (search_in_folder->summary->flags & CAMEL_FOLDER_SUMMARY_IN_MEMORY_ONLY) != 0)
+	    camel_folder_get_folder_summary (search_in_folder) &&
+	    (camel_folder_get_folder_summary (search_in_folder)->flags & CAMEL_FOLDER_SUMMARY_IN_MEMORY_ONLY) != 0)
 		return TRUE;
 
 	if (!expr)
@@ -1900,8 +1900,8 @@ camel_folder_search_count (CamelFolderSearch *search,
 	if (do_search_in_memory (search->folder, expr, &sql_query)) {
 		/* setup our search list only contains those we're interested in */
 		search->summary = camel_folder_get_summary (search->folder);
-		if (search->folder->summary)
-			camel_folder_summary_prepare_fetch_all (search->folder->summary, NULL);
+		if (camel_folder_get_folder_summary (search->folder))
+			camel_folder_summary_prepare_fetch_all (camel_folder_get_folder_summary (search->folder), NULL);
 
 		summary_set = search->summary;
 
@@ -1959,7 +1959,7 @@ camel_folder_search_count (CamelFolderSearch *search,
 		parent_store = camel_folder_get_parent_store (search->folder);
 
 		/* Sync the db, so that we search the db for changes */
-		camel_folder_summary_save_to_db (search->folder->summary, error);
+		camel_folder_summary_save_to_db (camel_folder_get_folder_summary (search->folder), error);
 
 		dd (printf ("sexp is : [%s]\n", expr));
 		tmp1 = camel_db_sqlize_string (full_name);
@@ -2072,8 +2072,8 @@ camel_folder_search_search (CamelFolderSearch *search,
 					g_ptr_array_add (search->summary_set, search->summary->pdata[i]);
 			g_hash_table_destroy (uids_hash);
 		} else {
-			if (search->folder->summary)
-				camel_folder_summary_prepare_fetch_all (search->folder->summary, NULL);
+			if (camel_folder_get_folder_summary (search->folder))
+				camel_folder_summary_prepare_fetch_all (camel_folder_get_folder_summary (search->folder), NULL);
 			summary_set = search->summary;
 		}
 
@@ -2133,7 +2133,7 @@ camel_folder_search_search (CamelFolderSearch *search,
 		parent_store = camel_folder_get_parent_store (search->folder);
 
 		/* Sync the db, so that we search the db for changes */
-		camel_folder_summary_save_to_db (search->folder->summary, error);
+		camel_folder_summary_save_to_db (camel_folder_get_folder_summary (search->folder), error);
 
 		dd (printf ("sexp is : [%s]\n", expr));
 		tmp1 = camel_db_sqlize_string (full_name);

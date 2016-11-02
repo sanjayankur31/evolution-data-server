@@ -57,7 +57,7 @@ typedef struct _CamelVeeSummaryClass CamelVeeSummaryClass;
 typedef struct _CamelVeeSummaryPrivate CamelVeeSummaryPrivate;
 
 struct _CamelVeeSummary {
-	CamelFolderSummary summary;
+	CamelFolderSummary parent;
 
 	CamelVeeSummaryPrivate *priv;
 };
@@ -73,7 +73,7 @@ GType		camel_vee_summary_get_type	(void);
 CamelFolderSummary *
 		camel_vee_summary_new		(CamelFolder *parent);
 CamelVeeMessageInfo *
-		camel_vee_summary_add		(CamelVeeSummary *s,
+		camel_vee_summary_add		(CamelVeeSummary *summary,
 						 struct _CamelVeeMessageInfoData *mi_data);
 void		camel_vee_summary_remove	(CamelVeeSummary *summary,
 						 const gchar *vuid,

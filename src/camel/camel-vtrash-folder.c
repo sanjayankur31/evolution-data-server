@@ -257,7 +257,7 @@ camel_vtrash_folder_new (CamelStore *parent_store,
 		CAMEL_STORE_FOLDER_PRIVATE |
 		CAMEL_STORE_FOLDER_CREATE);
 
-	((CamelFolder *) vtrash)->folder_flags |= vdata[type].flags;
+	camel_folder_set_flags (CAMEL_FOLDER (vtrash), camel_folder_get_flags (CAMEL_FOLDER (vtrash)) | vdata[type].flags);
 	camel_vee_folder_set_expression ((CamelVeeFolder *) vtrash, vdata[type].expr);
 	vtrash->bit = vdata[type].bit;
 	vtrash->type = type;

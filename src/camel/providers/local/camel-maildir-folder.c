@@ -48,10 +48,10 @@ maildir_folder_cmp_uids (CamelFolder *folder,
 	time_t tma, tmb;
 
 	g_return_val_if_fail (folder != NULL, 0);
-	g_return_val_if_fail (folder->summary != NULL, 0);
+	g_return_val_if_fail (camel_folder_get_folder_summary (folder) != NULL, 0);
 
-	a = camel_folder_summary_get (folder->summary, uid1);
-	b = camel_folder_summary_get (folder->summary, uid2);
+	a = camel_folder_summary_get (camel_folder_get_folder_summary (folder), uid1);
+	b = camel_folder_summary_get (camel_folder_get_folder_summary (folder), uid2);
 
 	if (!a || !b) {
 		/* It's not a problem when one of the messages is not in the summary */
@@ -84,7 +84,7 @@ maildir_folder_sort_uids (CamelFolder *folder,
 	g_return_if_fail (folder != NULL);
 
 	if (uids && uids->len > 1)
-		camel_folder_summary_prepare_fetch_all (folder->summary, NULL);
+		camel_folder_summary_prepare_fetch_all (camel_folder_get_folder_summary (folder), NULL);
 
 	/* Chain up to parent's sort_uids() method. */
 	CAMEL_FOLDER_CLASS (camel_maildir_folder_parent_class)->sort_uids (folder, uids);
@@ -101,7 +101,7 @@ maildir_folder_get_filename (CamelFolder *folder,
 	gchar *res;
 
 	/* get the message summary info */
-	if ((info = camel_folder_summary_get (folder->summary, uid)) == NULL) {
+	if ((info = camel_folder_summary_get (camel_folder_get_folder_summary (folder), uid)) == NULL) {
 		set_cannot_get_message_ex (
 			error, CAMEL_FOLDER_ERROR_INVALID_UID,
 			uid, lf->folder_path, _("No such message"));
@@ -175,7 +175,7 @@ maildir_folder_append_message_sync (CamelFolder *folder,
 
 	/* add it to the summary/assign the uid, etc */
 	mi = camel_local_summary_add (
-		CAMEL_LOCAL_SUMMARY (folder->summary),
+		CAMEL_LOCAL_SUMMARY (camel_folder_get_folder_summary (folder)),
 		message, info, lf->changes, error);
 	if (mi == NULL)
 		goto check_changed;
@@ -226,7 +226,7 @@ maildir_folder_append_message_sync (CamelFolder *folder,
  fail_write:
 
 	/* remove the summary info so we are not out-of-sync with the mh folder */
-	camel_folder_summary_remove (CAMEL_FOLDER_SUMMARY (folder->summary), mi);
+	camel_folder_summary_remove (CAMEL_FOLDER_SUMMARY (camel_folder_get_folder_summary (folder)), mi);
 
 	g_prefix_error (
 		error, _("Cannot append message to maildir folder: %s: "),
@@ -338,7 +338,7 @@ maildir_folder_transfer_messages_to_sync (CamelFolder *source,
 			CamelMaildirMessageInfo *mdi;
 			CamelMessageInfo *info;
 
-			if ((info = camel_folder_summary_get (source->summary, uid)) == NULL) {
+			if ((info = camel_folder_summary_get (camel_folder_get_folder_summary (source), uid)) == NULL) {
 				set_cannot_get_message_ex (
 					error, CAMEL_FOLDER_ERROR_INVALID_UID,
 					uid, lf->folder_path, _("No such message"));
@@ -370,16 +370,16 @@ maildir_folder_transfer_messages_to_sync (CamelFolder *source,
 			} else {
 				CamelMessageInfo *clone;
 
-				clone = camel_message_info_clone (info, dest->summary);
+				clone = camel_message_info_clone (info, camel_folder_get_folder_summary (dest));
 
 				camel_maildir_message_info_set_filename (CAMEL_MAILDIR_MESSAGE_INFO (clone), new_filename);
 				/* unset deleted flag when transferring from trash folder */
-				if ((source->folder_flags & CAMEL_FOLDER_IS_TRASH) != 0)
+				if ((camel_folder_get_flags (source) & CAMEL_FOLDER_IS_TRASH) != 0)
 					camel_message_info_set_flags (info, CAMEL_MESSAGE_DELETED, 0);
 				/* unset junk flag when transferring from junk folder */
-				if ((source->folder_flags & CAMEL_FOLDER_IS_JUNK) != 0)
+				if ((camel_folder_get_flags (source) & CAMEL_FOLDER_IS_JUNK) != 0)
 					camel_message_info_set_flags (info, CAMEL_MESSAGE_JUNK, 0);
-				camel_folder_summary_add (dest->summary, clone, FALSE);
+				camel_folder_summary_add (camel_folder_get_folder_summary (dest), clone, FALSE);
 
 				camel_folder_change_info_add_uid (df->changes, camel_message_info_get_uid (clone));
 
@@ -387,7 +387,7 @@ maildir_folder_transfer_messages_to_sync (CamelFolder *source,
 					source, uid, CAMEL_MESSAGE_DELETED |
 					CAMEL_MESSAGE_SEEN, ~0);
 				camel_folder_change_info_remove_uid (lf->changes, camel_message_info_get_uid (info));
-				camel_folder_summary_remove (source->summary, info);
+				camel_folder_summary_remove (camel_folder_get_folder_summary (source), info);
 				g_clear_object (&clone);
 			}
 
@@ -496,7 +496,7 @@ camel_maildir_folder_new (CamelStore *parent_store,
 	g_object_unref (settings);
 
 	if (filter_inbox && (g_str_equal (full_name, ".") || g_ascii_strcasecmp (full_name, "Inbox") == 0))
-		folder->folder_flags |= CAMEL_FOLDER_FILTER_RECENT;
+		camel_folder_set_flags (folder, camel_folder_get_flags (folder) | CAMEL_FOLDER_FILTER_RECENT);
 
 	folder = (CamelFolder *) camel_local_folder_construct (
 		CAMEL_LOCAL_FOLDER (folder), flags, cancellable, error);

@@ -175,7 +175,7 @@ add_range_xover (CamelNNTPSummary *cns,
 
 	s = (CamelFolderSummary *) cns;
 	folder_filter_recent = camel_folder_summary_get_folder (s) &&
-		(camel_folder_summary_get_folder (s)->folder_flags & CAMEL_FOLDER_FILTER_RECENT) != 0;
+		(camel_folder_get_flags (camel_folder_summary_get_folder (s)) & CAMEL_FOLDER_FILTER_RECENT) != 0;
 
 	service = CAMEL_SERVICE (nntp_store);
 
@@ -314,7 +314,7 @@ add_range_head (CamelNNTPSummary *cns,
 
 	s = (CamelFolderSummary *) cns;
 	folder_filter_recent = camel_folder_summary_get_folder (s) &&
-		(camel_folder_summary_get_folder (s)->folder_flags & CAMEL_FOLDER_FILTER_RECENT) != 0;
+		(camel_folder_get_flags (camel_folder_summary_get_folder (s)) & CAMEL_FOLDER_FILTER_RECENT) != 0;
 
 	mp = camel_mime_parser_new ();
 

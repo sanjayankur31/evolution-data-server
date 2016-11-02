@@ -122,11 +122,6 @@ struct _CamelFolderQuotaInfo {
 struct _CamelFolder {
 	CamelObject parent;
 	CamelFolderPrivate *priv;
-
-	CamelFolderSummary *summary;
-
-	CamelFolderFlags folder_flags;
-	guint32 permanent_flags; /* bit-or of CamelMessageFlags */
 };
 
 struct _CamelFolderClass {
@@ -270,6 +265,11 @@ void		camel_folder_set_lock_async	(CamelFolder *folder,
 						 gboolean skip_folder_lock);
 struct _CamelStore *
 		camel_folder_get_parent_store	(CamelFolder *folder);
+CamelFolderSummary *
+		camel_folder_get_folder_summary	(CamelFolder *folder);
+void		camel_folder_take_folder_summary
+						(CamelFolder *folder,
+						 CamelFolderSummary *summary);
 const gchar *	camel_folder_get_full_name	(CamelFolder *folder);
 gchar *		camel_folder_dup_full_name	(CamelFolder *folder);
 void		camel_folder_set_full_name	(CamelFolder *folder,
@@ -282,6 +282,9 @@ const gchar *	camel_folder_get_description	(CamelFolder *folder);
 gchar *		camel_folder_dup_description	(CamelFolder *folder);
 void		camel_folder_set_description	(CamelFolder *folder,
 						 const gchar *description);
+guint32		camel_folder_get_flags		(CamelFolder *folder);
+void		camel_folder_set_flags		(CamelFolder *folder,
+						 guint32 folder_flags);
 guint32		camel_folder_get_permanent_flags
 						(CamelFolder *folder);
 #ifndef CAMEL_DISABLE_DEPRECATED

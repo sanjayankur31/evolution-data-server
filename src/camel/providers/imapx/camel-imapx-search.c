@@ -250,11 +250,11 @@ imapx_search_match_all (CamelSExp *sexp,
 	summary = search->summary_set ? search->summary_set : search->summary;
 
 	if (!CAMEL_IS_VEE_FOLDER (search->folder)) {
-		camel_folder_summary_prepare_fetch_all (search->folder->summary, NULL);
+		camel_folder_summary_prepare_fetch_all (camel_folder_get_folder_summary (search->folder), NULL);
 	}
 
 	for (ii = 0; ii < summary->len; ii++) {
-		search->current = camel_folder_summary_get (search->folder->summary, summary->pdata[ii]);
+		search->current = camel_folder_summary_get (camel_folder_get_folder_summary (search->folder), summary->pdata[ii]);
 		if (search->current) {
 			result = camel_sexp_term_eval (sexp, argv[0]);
 			camel_sexp_result_free (sexp, result);

@@ -410,8 +410,8 @@ imapx_update_store_summary (CamelFolder *folder)
 	if (si == NULL)
 		return;
 
-	total = camel_folder_summary_count (folder->summary);
-	unread = camel_folder_summary_get_unread_count (folder->summary);
+	total = camel_folder_summary_count (camel_folder_get_folder_summary (folder));
+	unread = camel_folder_summary_get_unread_count (camel_folder_get_folder_summary (folder));
 
 	if (si->unread != unread || si->total != total) {
 		si->unread = unread;
@@ -432,7 +432,7 @@ camel_imapx_dup_uid_from_summary_index (CamelFolder *folder,
 
 	g_return_val_if_fail (CAMEL_IS_FOLDER (folder), NULL);
 
-	summary = folder->summary;
+	summary = camel_folder_get_folder_summary (folder);
 	g_return_val_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary), NULL);
 
 	array = camel_folder_summary_get_array (summary);
@@ -2647,7 +2647,7 @@ camel_imapx_command_add_qresync_parameter (CamelIMAPXCommand *ic,
 	g_return_val_if_fail (CAMEL_IS_IMAPX_FOLDER (folder), FALSE);
 
 	imapx_folder = CAMEL_IMAPX_FOLDER (folder);
-	imapx_summary = CAMEL_IMAPX_SUMMARY (folder->summary);
+	imapx_summary = CAMEL_IMAPX_SUMMARY (camel_folder_get_folder_summary (folder));
 
 	mailbox = camel_imapx_folder_ref_mailbox (imapx_folder);
 	if (!mailbox)
@@ -2659,7 +2659,7 @@ camel_imapx_command_add_qresync_parameter (CamelIMAPXCommand *ic,
 
 	/* XXX This should return an unsigned integer to
 	 *     avoid the possibility of a negative count. */
-	summary_total = camel_folder_summary_count (folder->summary);
+	summary_total = camel_folder_summary_count (camel_folder_get_folder_summary (folder));
 	g_return_val_if_fail (summary_total >= 0, FALSE);
 
 	if (summary_total > 0) {

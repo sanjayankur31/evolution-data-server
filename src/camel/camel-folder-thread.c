@@ -685,12 +685,12 @@ camel_folder_thread_messages_new (CamelFolder *folder,
 	thread->node_chunks = camel_memchunk_new (32, sizeof (CamelFolderThreadNode));
 	thread->folder = g_object_ref (folder);
 
-	camel_folder_summary_prepare_fetch_all (folder->summary, NULL);
+	camel_folder_summary_prepare_fetch_all (camel_folder_get_folder_summary (folder), NULL);
 	thread->summary = summary = g_ptr_array_new ();
 
 	/* prefer given order from the summary order */
 	if (!uids) {
-		fsummary = camel_folder_summary_get_array (folder->summary);
+		fsummary = camel_folder_summary_get_array (camel_folder_get_folder_summary (folder));
 		uids = fsummary;
 	}
 
