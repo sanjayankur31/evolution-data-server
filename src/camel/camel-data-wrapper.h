@@ -59,12 +59,6 @@ typedef struct _CamelDataWrapperPrivate CamelDataWrapperPrivate;
 struct _CamelDataWrapper {
 	GObject parent;
 	CamelDataWrapperPrivate *priv;
-
-	CamelTransferEncoding encoding;
-
-	CamelContentType *mime_type;
-
-	guint offline : 1;
 };
 
 struct _CamelDataWrapperClass {
@@ -119,6 +113,10 @@ CamelDataWrapper *
 		camel_data_wrapper_new		(void);
 GByteArray *	camel_data_wrapper_get_byte_array
 						(CamelDataWrapper *data_wrapper);
+CamelTransferEncoding
+		camel_data_wrapper_get_encoding	(CamelDataWrapper *data_wrapper);
+void		camel_data_wrapper_set_encoding	(CamelDataWrapper *data_wrapper,
+						 CamelTransferEncoding encoding);
 void		camel_data_wrapper_set_mime_type
 						(CamelDataWrapper *data_wrapper,
 						 const gchar *mime_type);
@@ -130,7 +128,12 @@ CamelContentType *
 void		camel_data_wrapper_set_mime_type_field
 						(CamelDataWrapper *data_wrapper,
 						 CamelContentType *mime_type);
+void		camel_data_wrapper_take_mime_type_field
+						(CamelDataWrapper *data_wrapper,
+						 CamelContentType *mime_type);
 gboolean	camel_data_wrapper_is_offline	(CamelDataWrapper *data_wrapper);
+void		camel_data_wrapper_set_offline	(CamelDataWrapper *data_wrapper,
+						 gboolean offline);
 
 gssize		camel_data_wrapper_write_to_stream_sync
 						(CamelDataWrapper *data_wrapper,

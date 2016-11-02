@@ -527,7 +527,7 @@ match_words_1message (CamelDataWrapper *object,
 	} else if (CAMEL_IS_MIME_MESSAGE (containee)) {
 		/* for messages we only look at its contents */
 		truth = match_words_1message ((CamelDataWrapper *) containee, words, mask, cancellable);
-	} else if (camel_content_type_is (CAMEL_DATA_WRAPPER (containee)->mime_type, "text", "*")) {
+	} else if (camel_content_type_is (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (containee)), "text", "*")) {
 		/* for all other text parts, we look inside, otherwise we dont care */
 		CamelStream *stream;
 		GByteArray *byte_array;
@@ -536,7 +536,7 @@ match_words_1message (CamelDataWrapper *object,
 		byte_array = g_byte_array_new ();
 		stream = camel_stream_mem_new_with_byte_array (byte_array);
 
-		charset = camel_content_type_param (CAMEL_DATA_WRAPPER (containee)->mime_type, "charset");
+		charset = camel_content_type_param (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (containee)), "charset");
 		if (charset && *charset) {
 			CamelMimeFilter *filter = camel_mime_filter_charset_new (charset, "UTF-8");
 			if (filter) {

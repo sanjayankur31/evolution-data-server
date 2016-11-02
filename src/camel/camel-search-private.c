@@ -524,8 +524,8 @@ camel_search_message_body_contains (CamelDataWrapper *object,
 	} else if (CAMEL_IS_MIME_MESSAGE (containee)) {
 		/* For messages we only look at its contents. */
 		truth = camel_search_message_body_contains ((CamelDataWrapper *) containee, pattern);
-	} else if (camel_content_type_is (CAMEL_DATA_WRAPPER (containee)->mime_type, "text", "*")
-		|| camel_content_type_is (CAMEL_DATA_WRAPPER (containee)->mime_type, "x-evolution", "evolution-rss-feed")) {
+	} else if (camel_content_type_is (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (containee)), "text", "*")
+		|| camel_content_type_is (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (containee)), "x-evolution", "evolution-rss-feed")) {
 		/* For all other text parts we look
 		 * inside, otherwise we don't care. */
 		CamelStream *stream;
@@ -535,7 +535,7 @@ camel_search_message_body_contains (CamelDataWrapper *object,
 		byte_array = g_byte_array_new ();
 		stream = camel_stream_mem_new_with_byte_array (byte_array);
 
-		charset = camel_content_type_param (CAMEL_DATA_WRAPPER (containee)->mime_type, "charset");
+		charset = camel_content_type_param (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (containee)), "charset");
 		if (charset && *charset) {
 			CamelMimeFilter *filter = camel_mime_filter_charset_new (charset, "UTF-8");
 			if (filter) {

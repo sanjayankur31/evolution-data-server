@@ -138,7 +138,7 @@ camel_mime_part_construct_content_from_parser (CamelMimePart *dw,
 
 	if (content) {
 		if (encoding)
-			content->encoding = camel_transfer_encoding_from_string (encoding);
+			camel_data_wrapper_set_encoding (content, camel_transfer_encoding_from_string (encoding));
 
 		/* would you believe you have to set this BEFORE you set the content object???  oh my god !!!! */
 		camel_data_wrapper_set_mime_type_field (content, camel_mime_part_get_content_type (dw));

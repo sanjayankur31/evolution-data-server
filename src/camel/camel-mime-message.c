@@ -120,8 +120,8 @@ process_header (CamelMedium *medium,
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
-		if (((CamelDataWrapper *) message)->mime_type) {
-			charset = camel_content_type_param (((CamelDataWrapper *) message)->mime_type, "charset");
+		if (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (message))) {
+			charset = camel_content_type_param (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (message)), "charset");
 			charset = camel_iconv_charset_name (charset);
 		} else
 			charset = NULL;
@@ -951,7 +951,7 @@ find_best_encoding (CamelMimePart *part,
 		return CAMEL_TRANSFER_ENCODING_DEFAULT;
 	}
 
-	istext = camel_content_type_is (((CamelDataWrapper *) part)->mime_type, "text", "*");
+	istext = camel_content_type_is (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (part)), "text", "*");
 	if (istext) {
 		flags = CAMEL_BESTENC_GET_CHARSET | CAMEL_BESTENC_GET_ENCODING;
 		enctype |= CAMEL_BESTENC_TEXT;
@@ -971,7 +971,7 @@ find_best_encoding (CamelMimePart *part,
 
 	/* if we're looking for the best charset, then we need to convert to UTF-8 */
 	if (istext && (required & CAMEL_BESTENC_GET_CHARSET) != 0
-	    && (charsetin = camel_content_type_param (content->mime_type, "charset"))) {
+	    && (charsetin = camel_content_type_param (camel_data_wrapper_get_mime_type_field (content), "charset"))) {
 		charenc = camel_mime_filter_charset_new (charsetin, "UTF-8");
 		if (charenc != NULL)
 			idc = camel_stream_filter_add (
@@ -997,7 +997,7 @@ find_best_encoding (CamelMimePart *part,
 		d (printf ("best charset = %s\n", charsetin ? charsetin : "(null)"));
 		charset = g_strdup (charsetin);
 
-		charsetin = camel_content_type_param (content->mime_type, "charset");
+		charsetin = camel_content_type_param (camel_data_wrapper_get_mime_type_field (content), "charset");
 	} else {
 		charset = NULL;
 	}
@@ -1081,14 +1081,14 @@ best_encoding (CamelMimeMessage *msg,
 		camel_mime_part_set_encoding (part, encoding);
 
 		if ((data->required & CAMEL_BESTENC_GET_CHARSET) != 0) {
-			if (camel_content_type_is (((CamelDataWrapper *) part)->mime_type, "text", "*")) {
+			if (camel_content_type_is (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (part)), "text", "*")) {
 				gchar *newct;
 
 				/* FIXME: ick, the part content_type interface needs fixing bigtime */
 				camel_content_type_set_param (
-					((CamelDataWrapper *) part)->mime_type, "charset",
+					camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (part)), "charset",
 					charset ? charset : "us-ascii");
-				newct = camel_content_type_format (((CamelDataWrapper *) part)->mime_type);
+				newct = camel_content_type_format (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (part)));
 				if (newct) {
 					d (printf ("Setting content-type to %s\n", newct));
 
@@ -1383,7 +1383,7 @@ cmm_dump_rec (CamelMimeMessage *msg,
 	s[depth] = 0;
 	/* yes this leaks, so what its only debug stuff */
 	printf ("%sclass: %s\n", s, G_OBJECT_TYPE_NAME (part));
-	printf ("%smime-type: %s\n", s, camel_content_type_format (((CamelDataWrapper *) part)->mime_type));
+	printf ("%smime-type: %s\n", s, camel_content_type_format (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (part))));
 
 	containee = camel_medium_get_content ((CamelMedium *) part);
 
@@ -1391,7 +1391,7 @@ cmm_dump_rec (CamelMimeMessage *msg,
 		return;
 
 	printf ("%scontent class: %s\n", s, G_OBJECT_TYPE_NAME (containee));
-	printf ("%scontent mime-type: %s\n", s, camel_content_type_format (((CamelDataWrapper *) containee)->mime_type));
+	printf ("%scontent mime-type: %s\n", s, camel_content_type_format (camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (containee))));
 
 	data = camel_data_wrapper_get_byte_array (containee);
 	if (body && data) {

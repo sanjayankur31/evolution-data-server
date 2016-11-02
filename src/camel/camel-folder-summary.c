@@ -2972,7 +2972,7 @@ summary_traverse_content_with_part (CamelFolderSummary *summary,
 	 * add a reference, probably need fixing for multithreading */
 
 	/* check for attachments */
-	ct = ((CamelDataWrapper *) containee)->mime_type;
+	ct = camel_data_wrapper_get_mime_type_field (CAMEL_DATA_WRAPPER (containee));
 	if (camel_content_type_is (ct, "multipart", "*")) {
 		if (camel_content_type_is (ct, "multipart", "mixed"))
 			camel_message_info_set_flags (msginfo, CAMEL_MESSAGE_ATTACHMENTS, CAMEL_MESSAGE_ATTACHMENTS);
