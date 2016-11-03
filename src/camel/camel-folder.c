@@ -2165,7 +2165,7 @@ camel_folder_sort_uids (CamelFolder *folder,
  * should not be modified, and must be freed with
  * camel_folder_free_summary().
  *
- * Returns: (element-type CamelMessageInfo) (transfer none): an array of #CamelMessageInfo
+ * Returns: (element-type utf8) (transfer none): an array of UID-s of #CamelMessageInfo
  **/
 GPtrArray *
 camel_folder_get_summary (CamelFolder *folder)
