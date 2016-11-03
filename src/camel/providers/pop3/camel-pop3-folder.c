@@ -1005,8 +1005,10 @@ pop3_get_message_time_from_cache (CamelFolder *folder,
 		}
 
 		if (message) {
+			gint date_offset = 0;
+
 			res = TRUE;
-			*message_time = message->date + message->date_offset;
+			*message_time = camel_mime_message_get_date (message, &date_offset) + date_offset;
 
 			g_object_unref (message);
 		}
@@ -1092,7 +1094,8 @@ camel_pop3_folder_delete_old (CamelFolder *folder,
 			message = pop3_folder_get_message_internal_sync (
 				folder, fi->uid, TRUE, cancellable, error);
 			if (message) {
-				message_time = message->date + message->date_offset;
+				gint date_offset = 0;
+				message_time = camel_mime_message_get_date (message, &date_offset) + date_offset;
 				g_object_unref (message);
 			}
 		}
