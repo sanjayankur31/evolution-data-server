@@ -51,6 +51,7 @@ G_BEGIN_DECLS
 
 typedef struct _CamelSExp CamelSExp;
 typedef struct _CamelSExpClass CamelSExpClass;
+typedef struct _CamelSExpPrivate CamelSExpPrivate;
 
 typedef struct _CamelSExpSymbol CamelSExpSymbol;
 typedef struct _CamelSExpResult CamelSExpResult;
@@ -170,18 +171,7 @@ struct _CamelSExpTerm {
  **/
 struct _CamelSExp {
 	GObject parent;
-	GScanner *scanner;	/* for parsing text version */
-	CamelSExpTerm *tree;	/* root of expression tree */
-
-	/* private stuff */
-	jmp_buf failenv;
-	gchar *error;
-	GSList *operators;
-
-	/* TODO: may also need a pool allocator for term strings,
-	 *       so we dont lose them in error conditions? */
-	CamelMemChunk *term_chunks;
-	CamelMemChunk *result_chunks;
+	CamelSExpPrivate *priv;
 };
 
 struct _CamelSExpClass {
