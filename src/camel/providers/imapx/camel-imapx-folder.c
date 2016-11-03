@@ -1460,7 +1460,7 @@ camel_imapx_folder_invalidate_local_cache (CamelIMAPXFolder *folder,
 
 	CAMEL_IMAPX_SUMMARY (summary)->validity = new_uidvalidity;
 	camel_folder_summary_touch (summary);
-	camel_folder_summary_save_to_db (summary, NULL);
+	camel_folder_summary_save (summary, NULL);
 
 	camel_data_cache_clear (folder->cache, "cache");
 	camel_data_cache_clear (folder->cache, "cur");

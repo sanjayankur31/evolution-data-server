@@ -145,7 +145,7 @@ camel_vee_summary_new (CamelFolder *parent)
 	const gchar *full_name;
 
 	summary = g_object_new (CAMEL_TYPE_VEE_SUMMARY, "folder", parent, NULL);
-	summary->flags |= CAMEL_FOLDER_SUMMARY_IN_MEMORY_ONLY;
+	camel_folder_summary_set_flags (summary, camel_folder_summary_get_flags (summary) | CAMEL_FOLDER_SUMMARY_IN_MEMORY_ONLY);
 
 	/* not using DB for vee folder summaries, drop the table */
 	full_name = camel_folder_get_full_name (parent);

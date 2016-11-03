@@ -61,8 +61,13 @@ G_DEFINE_TYPE (CamelSpoolSummary, camel_spool_summary, CAMEL_TYPE_MBOX_SUMMARY)
 static void
 camel_spool_summary_class_init (CamelSpoolSummaryClass *class)
 {
+	CamelFolderSummaryClass *folder_summary_class;
 	CamelLocalSummaryClass *local_summary_class;
 	CamelMboxSummaryClass *mbox_summary_class;
+
+	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
+	folder_summary_class->sort_by = "bdata";
+	folder_summary_class->collate = "spool_frompos_sort";
 
 	local_summary_class = CAMEL_LOCAL_SUMMARY_CLASS (class);
 	local_summary_class->load = spool_summary_load;
@@ -83,7 +88,7 @@ camel_spool_summary_init (CamelSpoolSummary *spool_summary)
 	/* message info size is from mbox parent */
 
 	/* and a unique file version */
-	folder_summary->version += CAMEL_SPOOL_SUMMARY_VERSION;
+	camel_folder_summary_set_version (folder_summary, camel_folder_summary_get_version (folder_summary) + CAMEL_SPOOL_SUMMARY_VERSION);
 }
 
 CamelSpoolSummary *
@@ -98,11 +103,9 @@ camel_spool_summary_new (CamelFolder *folder,
 
 		parent_store = camel_folder_get_parent_store (folder);
 		camel_db_set_collate (camel_store_get_db (parent_store), "bdata", "spool_frompos_sort", (CamelDBCollate) camel_local_frompos_sort);
-		((CamelFolderSummary *) new)->sort_by = "bdata";
-		((CamelFolderSummary *) new)->collate = "spool_frompos_sort";
 	}
 	camel_local_summary_construct ((CamelLocalSummary *) new, mbox_name, NULL);
-	camel_folder_summary_load_from_db ((CamelFolderSummary *) new, NULL);
+	camel_folder_summary_load ((CamelFolderSummary *) new, NULL);
 	return new;
 }
 
@@ -358,7 +361,7 @@ spool_summary_check (CamelLocalSummary *cls,
 		}
 
 		((CamelMboxSummary *) cls)->folder_size = st.st_size;
-		((CamelFolderSummary *) cls)->time = st.st_mtime;
+		camel_folder_summary_set_timestamp (CAMEL_FOLDER_SUMMARY (cls), st.st_mtime);
 	}
 
 	return 0;

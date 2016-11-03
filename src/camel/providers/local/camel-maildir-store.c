@@ -476,7 +476,7 @@ fill_fi (CamelStore *store,
 		g_free (root);
 
 		s = (CamelFolderSummary *) camel_maildir_summary_new (NULL, folderpath, NULL);
-		if (camel_folder_summary_header_load_from_db (s, store, fi->full_name, NULL)) {
+		if (camel_folder_summary_header_load (s, store, fi->full_name, NULL)) {
 			fi->unread = camel_folder_summary_get_unread_count (s);
 			fi->total = camel_folder_summary_get_saved_count (s);
 		}

@@ -38,9 +38,9 @@
 #define CAMEL_LOCAL_SUMMARY_VERSION (1)
 
 static CamelFIRecord *
-		summary_header_to_db		(CamelFolderSummary *,
+		summary_header_save		(CamelFolderSummary *,
 						 GError **error);
-static gboolean	summary_header_from_db		(CamelFolderSummary *,
+static gboolean	summary_header_load		(CamelFolderSummary *,
 						 CamelFIRecord *);
 
 static CamelMessageInfo *
@@ -117,8 +117,8 @@ camel_local_summary_class_init (CamelLocalSummaryClass *class)
 	object_class->finalize = local_summary_finalize;
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
-	folder_summary_class->summary_header_from_db = summary_header_from_db;
-	folder_summary_class->summary_header_to_db = summary_header_to_db;
+	folder_summary_class->summary_header_load = summary_header_load;
+	folder_summary_class->summary_header_save = summary_header_save;
 	folder_summary_class->message_info_new_from_header = message_info_new_from_header;
 
 	class->load = local_summary_load;
@@ -138,7 +138,7 @@ camel_local_summary_init (CamelLocalSummary *local_summary)
 	folder_summary = CAMEL_FOLDER_SUMMARY (local_summary);
 
 	/* and a unique file version */
-	folder_summary->version += CAMEL_LOCAL_SUMMARY_VERSION;
+	camel_folder_summary_set_version (folder_summary, camel_folder_summary_get_version (folder_summary) + CAMEL_LOCAL_SUMMARY_VERSION);
 }
 
 void
@@ -158,7 +158,7 @@ local_summary_load (CamelLocalSummary *cls,
                     GError **error)
 {
 	d (g_print ("\nlocal_summary_load called \n"));
-	return camel_folder_summary_load_from_db ((CamelFolderSummary *) cls, error);
+	return camel_folder_summary_load ((CamelFolderSummary *) cls, error);
 }
 
 /* load/check the summary */
@@ -483,7 +483,7 @@ local_summary_sync (CamelLocalSummary *cls,
 
 	folder_summary = CAMEL_FOLDER_SUMMARY (cls);
 
-	if (!camel_folder_summary_save_to_db (folder_summary, error)) {
+	if (!camel_folder_summary_save (folder_summary, error)) {
 		g_warning ("Could not save summary for local providers");
 		return -1;
 	}
@@ -694,15 +694,15 @@ local_summary_decode_x_evolution (CamelLocalSummary *cls,
 }
 
 static gboolean
-summary_header_from_db (CamelFolderSummary *s,
-                        CamelFIRecord *fir)
+summary_header_load (CamelFolderSummary *s,
+		     CamelFIRecord *fir)
 {
 	CamelLocalSummary *cls = (CamelLocalSummary *) s;
 	gchar *part, *tmp;
 
 	/* We dont actually add our own headers, but version that we don't anyway */
 
-	if (!CAMEL_FOLDER_SUMMARY_CLASS (camel_local_summary_parent_class)->summary_header_from_db (s, fir))
+	if (!CAMEL_FOLDER_SUMMARY_CLASS (camel_local_summary_parent_class)->summary_header_load (s, fir))
 		return FALSE;
 
 	part = fir->bdata;
@@ -719,15 +719,15 @@ summary_header_from_db (CamelFolderSummary *s,
 }
 
 static struct _CamelFIRecord *
-summary_header_to_db (CamelFolderSummary *s,
-                      GError **error)
+summary_header_save (CamelFolderSummary *s,
+		     GError **error)
 {
 	CamelFolderSummaryClass *folder_summary_class;
 	struct _CamelFIRecord *fir;
 
-	/* Chain up to parent's summary_header_to_db() method. */
+	/* Chain up to parent's summary_header_save() method. */
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (camel_local_summary_parent_class);
-	fir = folder_summary_class->summary_header_to_db (s, NULL);
+	fir = folder_summary_class->summary_header_save (s, NULL);
 	if (fir)
 		fir->bdata = g_strdup_printf ("%d", CAMEL_LOCAL_SUMMARY_VERSION);
 

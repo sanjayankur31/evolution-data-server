@@ -217,7 +217,7 @@ typedef struct _CamelFIRecord {
 	guint32 version;
 	guint32 flags;
 	guint32 nextuid;
-	time_t time;
+	gint64 timestamp;
 	guint32 saved_count;
 	guint32 unread_count;
 	guint32 deleted_count;

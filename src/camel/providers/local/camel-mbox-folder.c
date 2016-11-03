@@ -233,7 +233,7 @@ mbox_folder_append_message_sync (CamelFolder *folder,
 	/* now we 'fudge' the summary  to tell it its uptodate, because its idea of uptodate has just changed */
 	/* the stat really shouldn't fail, we just wrote to it */
 	if (g_stat (lf->folder_path, &st) == 0) {
-		((CamelFolderSummary *) mbs)->time = st.st_mtime;
+		camel_folder_summary_set_timestamp (CAMEL_FOLDER_SUMMARY (mbs), st.st_mtime);
 		mbs->folder_size = st.st_size;
 	}
 
@@ -281,7 +281,7 @@ fail_write:
 
 	/* and tell the summary it's up-to-date */
 	if (g_stat (lf->folder_path, &st) == 0) {
-		((CamelFolderSummary *) mbs)->time = st.st_mtime;
+		camel_folder_summary_set_timestamp (CAMEL_FOLDER_SUMMARY (mbs), st.st_mtime);
 		mbs->folder_size = st.st_size;
 	}
 

@@ -39,15 +39,13 @@ G_DEFINE_TYPE (
 	CAMEL_TYPE_FOLDER_SUMMARY)
 
 static gboolean
-imapx_summary_summary_header_from_db (CamelFolderSummary *s,
-                                      CamelFIRecord *mir)
+imapx_summary_summary_header_load (CamelFolderSummary *s,
+				   CamelFIRecord *mir)
 {
 	gboolean success;
 
-	/* Chain up to parent's summary_header_from_db() method. */
-	success = CAMEL_FOLDER_SUMMARY_CLASS (
-		camel_imapx_summary_parent_class)->
-		summary_header_from_db (s, mir);
+	/* Chain up to parent's summary_header_load() method. */
+	success = CAMEL_FOLDER_SUMMARY_CLASS (camel_imapx_summary_parent_class)->summary_header_load (s, mir);
 
 	if (success) {
 		CamelIMAPXSummary *ims;
@@ -74,15 +72,13 @@ imapx_summary_summary_header_from_db (CamelFolderSummary *s,
 }
 
 static CamelFIRecord *
-imapx_summary_summary_header_to_db (CamelFolderSummary *s,
-                                    GError **error)
+imapx_summary_summary_header_save (CamelFolderSummary *s,
+				   GError **error)
 {
 	struct _CamelFIRecord *fir;
 
-	/* Chain up to parent's summary_header_to_db() method. */
-	fir = CAMEL_FOLDER_SUMMARY_CLASS (
-		camel_imapx_summary_parent_class)->
-		summary_header_to_db (s, error);
+	/* Chain up to parent's summary_header_save() method. */
+	fir = CAMEL_FOLDER_SUMMARY_CLASS (camel_imapx_summary_parent_class)->summary_header_save (s, error);
 
 	if (fir != NULL) {
 		CamelIMAPXSummary *ims;
@@ -110,8 +106,10 @@ camel_imapx_summary_class_init (CamelIMAPXSummaryClass *class)
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
 	folder_summary_class->message_info_type = CAMEL_TYPE_IMAPX_MESSAGE_INFO;
-	folder_summary_class->summary_header_from_db = imapx_summary_summary_header_from_db;
-	folder_summary_class->summary_header_to_db = imapx_summary_summary_header_to_db;
+	folder_summary_class->sort_by = "uid";
+	folder_summary_class->collate = "imapx_uid_sort";
+	folder_summary_class->summary_header_load = imapx_summary_summary_header_load;
+	folder_summary_class->summary_header_save = imapx_summary_summary_header_save;
 }
 
 static void
@@ -170,11 +168,9 @@ camel_imapx_summary_new (CamelFolder *folder)
 	/* Don't do DB sort. Its pretty slow to load */
 	if (folder && 0) {
 		camel_db_set_collate (camel_store_get_db (parent_store), "uid", "imapx_uid_sort", (CamelDBCollate) sort_uid_cmp);
-		summary->sort_by = "uid";
-		summary->collate = "imapx_uid_sort";
 	}
 
-	if (!camel_folder_summary_load_from_db (summary, &local_error)) {
+	if (!camel_folder_summary_load (summary, &local_error)) {
 		/* FIXME: Isn't this dangerous ? We clear the summary
 		if it cannot be loaded, for some random reason.
 		We need to pass the error and find out why it is not loaded etc. ? */

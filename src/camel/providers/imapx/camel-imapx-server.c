@@ -775,7 +775,7 @@ imapx_expunge_uid_from_summary (CamelIMAPXServer *is,
 
 		g_mutex_unlock (&is->priv->changes_lock);
 
-		camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
+		camel_folder_summary_save (camel_folder_get_folder_summary (folder), NULL);
 		imapx_update_store_summary (folder);
 		camel_folder_changed (folder, changes);
 
@@ -988,7 +988,7 @@ imapx_untagged_vanished (CamelIMAPXServer *is,
 
 			g_mutex_unlock (&is->priv->changes_lock);
 
-			camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
+			camel_folder_summary_save (camel_folder_get_folder_summary (folder), NULL);
 			imapx_update_store_summary (folder);
 
 			camel_folder_changed (folder, changes);
@@ -1272,7 +1272,7 @@ imapx_untagged_fetch (CamelIMAPXServer *is,
 			g_free (uid);
 
 			if (changed && camel_imapx_server_is_in_idle (is)) {
-				camel_folder_summary_save_to_db (camel_folder_get_folder_summary (select_folder), NULL);
+				camel_folder_summary_save (camel_folder_get_folder_summary (select_folder), NULL);
 				imapx_update_store_summary (select_folder);
 
 				g_mutex_lock (&is->priv->changes_lock);
@@ -2330,7 +2330,7 @@ imapx_completion (CamelIMAPXServer *is,
 			folder = imapx_server_ref_folder (is, mailbox);
 			g_return_val_if_fail (folder != NULL, FALSE);
 
-			camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
+			camel_folder_summary_save (camel_folder_get_folder_summary (folder), NULL);
 
 			imapx_update_store_summary (folder);
 			camel_folder_changed (folder, changes);
@@ -4425,7 +4425,7 @@ camel_imapx_server_copy_message_sync (CamelIMAPXServer *is,
 
 					if (camel_folder_change_info_changed (changes)) {
 						camel_folder_summary_touch (camel_folder_get_folder_summary (destination_folder));
-						camel_folder_summary_save_to_db (camel_folder_get_folder_summary (destination_folder), NULL);
+						camel_folder_summary_save (camel_folder_get_folder_summary (destination_folder), NULL);
 						camel_folder_changed (destination_folder, changes);
 					}
 
@@ -4457,7 +4457,7 @@ camel_imapx_server_copy_message_sync (CamelIMAPXServer *is,
 
 				if (changes && camel_folder_change_info_changed (changes)) {
 					camel_folder_summary_touch (camel_folder_get_folder_summary (folder));
-					camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
+					camel_folder_summary_save (camel_folder_get_folder_summary (folder), NULL);
 					camel_folder_changed (folder, changes);
 				}
 
@@ -5134,7 +5134,7 @@ camel_imapx_server_refresh_info_sync (CamelIMAPXServer *is,
 		}
 
 		if (camel_folder_change_info_changed (changes)) {
-			camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
+			camel_folder_summary_save (camel_folder_get_folder_summary (folder), NULL);
 			imapx_update_store_summary (folder);
 			camel_folder_changed (folder, changes);
 		}
@@ -5202,7 +5202,7 @@ imapx_unset_folder_flagged_flag (CamelFolderSummary *summary,
 
 	if (changed) {
 		camel_folder_summary_touch (summary);
-		camel_folder_summary_save_to_db (summary, NULL);
+		camel_folder_summary_save (summary, NULL);
 	}
 }
 
@@ -5626,7 +5626,7 @@ camel_imapx_server_sync_changes_sync (CamelIMAPXServer *is,
 		unseen += unread_change;
 		camel_imapx_mailbox_set_unseen (mailbox, unseen);
 
-		if ((folder_summary->flags & CAMEL_FOLDER_SUMMARY_DIRTY) != 0) {
+		if ((camel_folder_summary_get_flags (folder_summary) & CAMEL_FOLDER_SUMMARY_DIRTY) != 0) {
 			CamelStoreInfo *si;
 
 			/* ... and store's summary when folder's summary is dirty */
@@ -5643,7 +5643,7 @@ camel_imapx_server_sync_changes_sync (CamelIMAPXServer *is,
 			}
 		}
 
-		camel_folder_summary_save_to_db (folder_summary, NULL);
+		camel_folder_summary_save (folder_summary, NULL);
 		camel_store_summary_save (CAMEL_IMAPX_STORE (parent_store)->summary);
 	}
 
@@ -5691,7 +5691,7 @@ camel_imapx_server_expunge_sync (CamelIMAPXServer *is,
 
 			camel_folder_summary_lock (folder_summary);
 
-			camel_folder_summary_save_to_db (folder_summary, NULL);
+			camel_folder_summary_save (folder_summary, NULL);
 			uids = camel_db_get_folder_deleted_uids (camel_store_get_db (parent_store), full_name, NULL);
 
 			if (uids && uids->len) {
@@ -5706,7 +5706,7 @@ camel_imapx_server_expunge_sync (CamelIMAPXServer *is,
 				}
 
 				camel_folder_summary_remove_uids (folder_summary, removed);
-				camel_folder_summary_save_to_db (folder_summary, NULL);
+				camel_folder_summary_save (folder_summary, NULL);
 
 				camel_folder_changed (folder, changes);
 				camel_folder_change_info_free (changes);

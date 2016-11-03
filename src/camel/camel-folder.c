@@ -250,7 +250,7 @@ folder_filter_data_free_thread (gpointer user_data)
 		camel_folder_free_deep (data->folder, data->notjunk);
 
 	/* XXX Too late to pass a GError here. */
-	camel_folder_summary_save_to_db (camel_folder_get_folder_summary (data->folder), NULL);
+	camel_folder_summary_save (camel_folder_get_folder_summary (data->folder), NULL);
 
 	camel_folder_thaw (data->folder);
 	g_object_unref (data->folder);
@@ -983,7 +983,7 @@ folder_thaw (CamelFolder *folder)
 		camel_folder_change_info_free (info);
 
 		if (folder->priv->summary)
-			camel_folder_summary_save_to_db (folder->priv->summary, NULL);
+			camel_folder_summary_save (folder->priv->summary, NULL);
 	}
 }
 

@@ -55,9 +55,9 @@ struct _CamelMboxMessageContentInfo {
 };
 
 static CamelFIRecord *
-		summary_header_to_db		(CamelFolderSummary *,
+		summary_header_save		(CamelFolderSummary *,
 						 GError **error);
-static gboolean	summary_header_from_db		(CamelFolderSummary *,
+static gboolean	summary_header_load		(CamelFolderSummary *,
 						 CamelFIRecord *);
 static CamelMessageInfo *
 		message_info_new_from_header	(CamelFolderSummary *,
@@ -116,8 +116,10 @@ camel_mbox_summary_class_init (CamelMboxSummaryClass *class)
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
 	folder_summary_class->message_info_type = CAMEL_TYPE_MBOX_MESSAGE_INFO;
-	folder_summary_class->summary_header_from_db = summary_header_from_db;
-	folder_summary_class->summary_header_to_db = summary_header_to_db;
+	folder_summary_class->sort_by = "bdata";
+	folder_summary_class->collate = "mbox_frompos_sort";
+	folder_summary_class->summary_header_load = summary_header_load;
+	folder_summary_class->summary_header_save = summary_header_save;
 	folder_summary_class->message_info_new_from_header = message_info_new_from_header;
 	folder_summary_class->message_info_new_from_parser = message_info_new_from_parser;
 
@@ -139,7 +141,7 @@ camel_mbox_summary_init (CamelMboxSummary *mbox_summary)
 	folder_summary = CAMEL_FOLDER_SUMMARY (mbox_summary);
 
 	/* and a unique file version */
-	folder_summary->version += CAMEL_MBOX_SUMMARY_VERSION;
+	camel_folder_summary_set_version (folder_summary, camel_folder_summary_get_version (folder_summary) + CAMEL_MBOX_SUMMARY_VERSION);
 }
 
 /**
@@ -158,16 +160,12 @@ camel_mbox_summary_new (CamelFolder *folder,
 
 	new = g_object_new (CAMEL_TYPE_MBOX_SUMMARY, "folder", folder, NULL);
 	if (folder) {
-		CamelFolderSummary *summary = (CamelFolderSummary *) new;
 		CamelStore *parent_store;
 
 		parent_store = camel_folder_get_parent_store (folder);
 
 		/* Set the functions for db sorting */
 		camel_db_set_collate (camel_store_get_db (parent_store), "bdata", "mbox_frompos_sort", (CamelDBCollate) camel_local_frompos_sort);
-		summary->sort_by = "bdata";
-		summary->collate = "mbox_frompos_sort";
-
 	}
 	camel_local_summary_construct ((CamelLocalSummary *) new, mbox_name, index);
 	return new;
@@ -200,13 +198,13 @@ mbox_summary_encode_x_evolution (CamelLocalSummary *cls,
 }
 
 static gboolean
-summary_header_from_db (CamelFolderSummary *s,
-                        struct _CamelFIRecord *fir)
+summary_header_load (CamelFolderSummary *s,
+		     struct _CamelFIRecord *fir)
 {
 	CamelMboxSummary *mbs = CAMEL_MBOX_SUMMARY (s);
 	gchar *part;
 
-	if (!CAMEL_FOLDER_SUMMARY_CLASS (camel_mbox_summary_parent_class)->summary_header_from_db (s, fir))
+	if (!CAMEL_FOLDER_SUMMARY_CLASS (camel_mbox_summary_parent_class)->summary_header_load (s, fir))
 		return FALSE;
 
 	part = fir->bdata;
@@ -219,17 +217,17 @@ summary_header_from_db (CamelFolderSummary *s,
 }
 
 static CamelFIRecord *
-summary_header_to_db (CamelFolderSummary *s,
-                      GError **error)
+summary_header_save (CamelFolderSummary *s,
+		     GError **error)
 {
 	CamelFolderSummaryClass *folder_summary_class;
 	CamelMboxSummary *mbs = CAMEL_MBOX_SUMMARY (s);
 	struct _CamelFIRecord *fir;
 	gchar *tmp;
 
-	/* Chain up to parent's summary_header_to_db() method. */
+	/* Chain up to parent's summary_header_save() method. */
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (camel_mbox_summary_parent_class);
-	fir = folder_summary_class->summary_header_to_db (s, error);
+	fir = folder_summary_class->summary_header_save (s, error);
 	if (fir) {
 		tmp = fir->bdata;
 		fir->bdata = g_strdup_printf ("%s %d %d", tmp ? tmp : "", CAMEL_MBOX_SUMMARY_VERSION, (gint) mbs->folder_size);
@@ -472,7 +470,7 @@ summary_update (CamelLocalSummary *cls,
 		if (g_stat (cls->folder_path, &st) == 0) {
 			camel_folder_summary_touch (s);
 			mbs->folder_size = st.st_size;
-			s->time = st.st_mtime;
+			camel_folder_summary_set_timestamp (s, st.st_mtime);
 		}
 	}
 
@@ -534,7 +532,7 @@ mbox_summary_check (CamelLocalSummary *cls,
 		ret = 0;
 	} else {
 		/* is the summary uptodate? */
-		if (st.st_size != mbs->folder_size || st.st_mtime != s->time) {
+		if (st.st_size != mbs->folder_size || st.st_mtime != camel_folder_summary_get_timestamp (s)) {
 			if (mbs->folder_size < st.st_size) {
 				/* this will automatically rescan from 0 if there is a problem */
 				d (printf ("folder grew, attempting to rebuild from %d\n", mbs->folder_size));
@@ -551,9 +549,9 @@ mbox_summary_check (CamelLocalSummary *cls,
 	/* FIXME: move upstream? */
 
 	if (ret != -1) {
-		if (mbs->folder_size != st.st_size || s->time != st.st_mtime) {
+		if (mbs->folder_size != st.st_size || camel_folder_summary_get_timestamp (s) != st.st_mtime) {
 			mbs->folder_size = st.st_size;
-			s->time = st.st_mtime;
+			camel_folder_summary_set_timestamp (s, st.st_mtime);
 			camel_folder_summary_touch (s);
 		}
 	}
@@ -981,8 +979,8 @@ mbox_summary_sync (CamelLocalSummary *cls,
 		return -1;
 	}
 
-	if (mbs->folder_size != st.st_size || s->time != st.st_mtime) {
-		s->time = st.st_mtime;
+	if (mbs->folder_size != st.st_size || camel_folder_summary_get_timestamp (s) != st.st_mtime) {
+		camel_folder_summary_set_timestamp (s, st.st_mtime);
 		mbs->folder_size = st.st_size;
 		camel_folder_summary_touch (s);
 	}
@@ -1211,7 +1209,7 @@ camel_mbox_summary_sync_mbox (CamelMboxSummary *cls,
 	camel_folder_summary_free_array (known_uids);
 
 	if (touched)
-		camel_folder_summary_header_save_to_db (s, NULL);
+		camel_folder_summary_header_save (s, NULL);
 
 	camel_folder_summary_unlock (s);
 

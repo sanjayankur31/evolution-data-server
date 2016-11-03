@@ -52,8 +52,8 @@ struct _CamelNNTPSummaryPrivate {
 };
 
 static CamelMessageInfo * message_info_new_from_header (CamelFolderSummary *, CamelHeaderRaw *);
-static gboolean summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir);
-static CamelFIRecord * summary_header_to_db (CamelFolderSummary *s, GError **error);
+static gboolean summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir);
+static CamelFIRecord * summary_header_save (CamelFolderSummary *s, GError **error);
 
 G_DEFINE_TYPE (CamelNNTPSummary, camel_nntp_summary, CAMEL_TYPE_FOLDER_SUMMARY)
 
@@ -66,8 +66,8 @@ camel_nntp_summary_class_init (CamelNNTPSummaryClass *class)
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
 	folder_summary_class->message_info_new_from_header = message_info_new_from_header;
-	folder_summary_class->summary_header_from_db = summary_header_from_db;
-	folder_summary_class->summary_header_to_db = summary_header_to_db;
+	folder_summary_class->summary_header_load = summary_header_load;
+	folder_summary_class->summary_header_save = summary_header_save;
 }
 
 static void
@@ -78,7 +78,7 @@ camel_nntp_summary_init (CamelNNTPSummary *nntp_summary)
 	nntp_summary->priv = CAMEL_NNTP_SUMMARY_GET_PRIVATE (nntp_summary);
 
 	/* and a unique file version */
-	summary->version += CAMEL_NNTP_SUMMARY_VERSION;
+	camel_folder_summary_set_version (summary, camel_folder_summary_get_version (summary) + CAMEL_NNTP_SUMMARY_VERSION);
 }
 
 CamelNNTPSummary *
@@ -113,13 +113,13 @@ message_info_new_from_header (CamelFolderSummary *s,
 }
 
 static gboolean
-summary_header_from_db (CamelFolderSummary *s,
-                        CamelFIRecord *mir)
+summary_header_load (CamelFolderSummary *s,
+		     CamelFIRecord *mir)
 {
 	CamelNNTPSummary *cns = CAMEL_NNTP_SUMMARY (s);
 	gchar *part;
 
-	if (!CAMEL_FOLDER_SUMMARY_CLASS (camel_nntp_summary_parent_class)->summary_header_from_db (s, mir))
+	if (!CAMEL_FOLDER_SUMMARY_CLASS (camel_nntp_summary_parent_class)->summary_header_load (s, mir))
 		return FALSE;
 
 	part = mir->bdata;
@@ -132,13 +132,13 @@ summary_header_from_db (CamelFolderSummary *s,
 }
 
 static CamelFIRecord *
-summary_header_to_db (CamelFolderSummary *s,
-                      GError **error)
+summary_header_save (CamelFolderSummary *s,
+		     GError **error)
 {
 	CamelNNTPSummary *cns = CAMEL_NNTP_SUMMARY (s);
 	struct _CamelFIRecord *fir;
 
-	fir = CAMEL_FOLDER_SUMMARY_CLASS (camel_nntp_summary_parent_class)->summary_header_to_db (s, error);
+	fir = CAMEL_FOLDER_SUMMARY_CLASS (camel_nntp_summary_parent_class)->summary_header_save (s, error);
 	if (!fir)
 		return NULL;
 	fir->bdata = g_strdup_printf ("%d %d %d", CAMEL_NNTP_SUMMARY_VERSION, cns->high, cns->low);
@@ -534,7 +534,7 @@ camel_nntp_summary_check (CamelNNTPSummary *cns,
 
 	/* TODO: not from here */
 	camel_folder_summary_touch (s);
-	camel_folder_summary_save_to_db (s, NULL);
+	camel_folder_summary_save (s, NULL);
 
 update:
 	/* update store summary if we have it */

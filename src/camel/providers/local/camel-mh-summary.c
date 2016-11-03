@@ -63,6 +63,8 @@ camel_mh_summary_class_init (CamelMhSummaryClass *class)
 	g_type_class_add_private (class, sizeof (CamelMhSummaryPrivate));
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
+	folder_summary_class->sort_by = "uid";
+	folder_summary_class->collate = "mh_uid_sort";
 	folder_summary_class->next_uid_string = mh_summary_next_uid_string;
 
 	local_summary_class = CAMEL_LOCAL_SUMMARY_CLASS (class);
@@ -81,7 +83,7 @@ camel_mh_summary_init (CamelMhSummary *mh_summary)
 	folder_summary = CAMEL_FOLDER_SUMMARY (mh_summary);
 
 	/* set unique file version */
-	folder_summary->version += CAMEL_MH_SUMMARY_VERSION;
+	camel_folder_summary_set_version (folder_summary, camel_folder_summary_get_version (folder_summary) + CAMEL_MH_SUMMARY_VERSION);
 }
 
 /**
@@ -104,8 +106,6 @@ camel_mh_summary_new (CamelFolder *folder,
 
 		parent_store = camel_folder_get_parent_store (folder);
 		camel_db_set_collate (camel_store_get_db (parent_store), "uid", "mh_uid_sort", (CamelDBCollate) camel_local_frompos_sort);
-		((CamelFolderSummary *) o)->sort_by = "uid";
-		((CamelFolderSummary *) o)->collate = "mh_uid_sort";
 	}
 
 	camel_local_summary_construct ((CamelLocalSummary *) o, mhdir, index);

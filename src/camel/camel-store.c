@@ -452,7 +452,7 @@ store_synchronize_sync (CamelStore *store,
 		CamelFolder *folder = folders->pdata[ii];
 
 		if (camel_folder_get_folder_summary (folder))
-			camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
+			camel_folder_summary_save (camel_folder_get_folder_summary (folder), NULL);
 
 		if (!CAMEL_IS_VEE_FOLDER (folder) && local_error == NULL) {
 			camel_folder_synchronize_sync (

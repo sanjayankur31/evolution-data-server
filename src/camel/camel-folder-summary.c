@@ -65,6 +65,11 @@
 #define dd(x) if (camel_debug("sync")) x
 
 struct _CamelFolderSummaryPrivate {
+	/* header info */
+	guint32 version;	/* version of file loaded/loading */
+	gint64 timestamp;	/* timestamp for this summary (for implementors to use) */
+	CamelFolderSummaryFlags flags;
+
 	GHashTable *filter_charset;	/* CamelMimeFilterCharset's indexed by source charset */
 
 	struct _CamelMimeFilter *filter_index;
@@ -323,7 +328,7 @@ is_in_memory_summary (CamelFolderSummary *summary)
 {
 	g_return_val_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary), FALSE);
 
-	return (summary->flags & CAMEL_FOLDER_SUMMARY_IN_MEMORY_ONLY) != 0;
+	return (summary->priv->flags & CAMEL_FOLDER_SUMMARY_IN_MEMORY_ONLY) != 0;
 }
 
 #define UPDATE_COUNTS_ADD		(1)
@@ -419,31 +424,31 @@ folder_summary_update_counts_by_flags (CamelFolderSummary *summary,
 }
 
 static gboolean
-summary_header_from_db (CamelFolderSummary *summary,
-                        CamelFIRecord *record)
+summary_header_load (CamelFolderSummary *summary,
+		     CamelFIRecord *record)
 {
 	io (printf ("Loading header from db \n"));
 
-	summary->version = record->version;
+	summary->priv->version = record->version;
 
 	/* We may not worry, as we are setting a new standard here */
 #if 0
 	/* Legacy version check, before version 12 we have no upgrade knowledge */
-	if ((summary->version > 0xff) && (summary->version & 0xff) < 12) {
+	if ((summary->priv->version > 0xff) && (summary->priv->version & 0xff) < 12) {
 		io (printf ("Summary header version mismatch"));
 		errno = EINVAL;
 		return FALSE;
 	}
 
-	if (!(summary->version < 0x100 && summary->version >= 13))
+	if (!(summary->priv->version < 0x100 && summary->priv->version >= 13))
 		io (printf ("Loading legacy summary\n"));
 	else
 		io (printf ("loading new-format summary\n"));
 #endif
 
-	summary->flags = record->flags;
+	summary->priv->flags = record->flags;
 	summary->priv->nextuid = record->nextuid;
-	summary->time = record->time;
+	summary->priv->timestamp = record->timestamp;
 	summary->priv->saved_count = record->saved_count;
 
 	summary->priv->unread_count = record->unread_count;
@@ -456,8 +461,8 @@ summary_header_from_db (CamelFolderSummary *summary,
 }
 
 static CamelFIRecord *
-summary_header_to_db (CamelFolderSummary *summary,
-                      GError **error)
+summary_header_save (CamelFolderSummary *summary,
+		     GError **error)
 {
 	CamelFIRecord *record = g_new0 (CamelFIRecord, 1);
 	CamelStore *parent_store;
@@ -476,9 +481,9 @@ summary_header_to_db (CamelFolderSummary *summary,
 
 	/* we always write out the current version */
 	record->version = CAMEL_FOLDER_SUMMARY_VERSION;
-	record->flags = summary->flags;
+	record->flags = summary->priv->flags;
 	record->nextuid = summary->priv->nextuid;
-	record->time = summary->time;
+	record->timestamp = summary->priv->timestamp;
 
 	if (cdb && !is_in_memory_summary (summary)) {
 		/* FIXME: Ever heard of Constructors and initializing ? */
@@ -606,8 +611,8 @@ camel_folder_summary_class_init (CamelFolderSummaryClass *class)
 
 	class->message_info_type = CAMEL_TYPE_MESSAGE_INFO_BASE;
 
-	class->summary_header_from_db = summary_header_from_db;
-	class->summary_header_to_db = summary_header_to_db;
+	class->summary_header_load = summary_header_load;
+	class->summary_header_save = summary_header_save;
 
 	class->message_info_new_from_header = message_info_new_from_header;
 	class->message_info_new_from_parser = message_info_new_from_parser;
@@ -728,9 +733,9 @@ camel_folder_summary_init (CamelFolderSummary *summary)
 {
 	summary->priv = CAMEL_FOLDER_SUMMARY_GET_PRIVATE (summary);
 
-	summary->version = CAMEL_FOLDER_SUMMARY_VERSION;
-	summary->flags = 0;
-	summary->time = 0;
+	summary->priv->version = CAMEL_FOLDER_SUMMARY_VERSION;
+	summary->priv->flags = 0;
+	summary->priv->timestamp = 0;
 
 	summary->priv->filter_charset = g_hash_table_new (
 		camel_strcase_hash, camel_strcase_equal);
@@ -774,6 +779,109 @@ camel_folder_summary_get_folder (CamelFolderSummary *summary)
 	g_return_val_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary), NULL);
 
 	return summary->priv->folder;
+}
+
+/**
+ * camel_folder_summary_get_flags:
+ * @summary: a #CamelFolderSummary
+ *
+ * Returns: flags of the @summary, a bit-or of #CamelFolderSummaryFlags
+ *
+ * Since: 3.24
+ **/
+guint32
+camel_folder_summary_get_flags (CamelFolderSummary *summary)
+{
+	g_return_val_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary), 0);
+
+	return summary->priv->flags;
+}
+
+/**
+ * camel_folder_summary_set_flags:
+ * @summary: a #CamelFolderSummary
+ * @flags: flags to set
+ *
+ * Sets flags of the @summary, a bit-or of #CamelFolderSummaryFlags.
+ *
+ * Since: 3.24
+ **/
+void
+camel_folder_summary_set_flags (CamelFolderSummary *summary,
+				guint32 flags)
+{
+	g_return_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary));
+
+	summary->priv->flags = flags;
+}
+
+/**
+ * camel_folder_summary_get_timestamp:
+ * @summary: a #CamelFolderSummary
+ *
+ * Returns: timestamp of the @summary, as set by the descendants
+ *
+ * Since: 3.24
+ **/
+gint64
+camel_folder_summary_get_timestamp (CamelFolderSummary *summary)
+{
+	g_return_val_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary), 0);
+
+	return summary->priv->timestamp;
+}
+
+/**
+ * camel_folder_summary_set_timestamp:
+ * @summary: a #CamelFolderSummary
+ * @timestamp: a timestamp to set
+ *
+ * Sets timestamp of the @summary, provided by the descendants. This doesn't
+ * change the 'dirty' flag of the @summary.
+ *
+ * Since: 3.24
+ **/
+void
+camel_folder_summary_set_timestamp (CamelFolderSummary *summary,
+				    gint64 timestamp)
+{
+	g_return_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary));
+
+	summary->priv->timestamp = timestamp;
+}
+
+/**
+ * camel_folder_summary_get_version:
+ * @summary: a #CamelFolderSummary
+ *
+ * Returns: version of the @summary
+ *
+ * Since: 3.24
+ **/
+guint32
+camel_folder_summary_get_version (CamelFolderSummary *summary)
+{
+	g_return_val_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary), 0);
+
+	return summary->priv->version;
+}
+
+/**
+ * camel_folder_summary_get_version:
+ * @summary: a #CamelFolderSummary
+ * @version: version to set
+ *
+ * Sets version of the @summary.
+ *
+ * Since: 3.24
+ **/
+void
+camel_folder_summary_set_version (CamelFolderSummary *summary,
+				  guint32 version)
+{
+	g_return_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary));
+
+	summary->priv->version = version;
 }
 
 /**
@@ -1620,14 +1728,15 @@ camel_folder_summary_prepare_fetch_all (CamelFolderSummary *summary,
 }
 
 /**
- * camel_folder_summary_load_from_db:
+ * camel_folder_summary_load:
  *
- * Since: 2.24
+ * Since: 3.24
  **/
 gboolean
-camel_folder_summary_load_from_db (CamelFolderSummary *summary,
-                                   GError **error)
+camel_folder_summary_load (CamelFolderSummary *summary,
+			   GError **error)
 {
+	CamelFolderSummaryClass *klass;
 	CamelDB *cdb;
 	CamelStore *parent_store;
 	const gchar *full_name;
@@ -1636,18 +1745,21 @@ camel_folder_summary_load_from_db (CamelFolderSummary *summary,
 
 	g_return_val_if_fail (CAMEL_IS_FOLDER_SUMMARY (summary), FALSE);
 
+	klass = CAMEL_FOLDER_SUMMARY_GET_CLASS (summary);
+	g_return_val_if_fail (klass != NULL, FALSE);
+
 	if (is_in_memory_summary (summary))
 		return TRUE;
 
 	camel_folder_summary_lock (summary);
-	camel_folder_summary_save_to_db (summary, NULL);
+	camel_folder_summary_save (summary, NULL);
 
 	/* struct _db_pass_data data; */
-	d (printf ("\ncamel_folder_summary_load_from_db called \n"));
+	d (printf ("\ncamel_folder_summary_load called \n"));
 
 	full_name = camel_folder_get_full_name (summary->priv->folder);
 	parent_store = camel_folder_get_parent_store (summary->priv->folder);
-	if (!camel_folder_summary_header_load_from_db (summary, parent_store, full_name, error)) {
+	if (!camel_folder_summary_header_load (summary, parent_store, full_name, error)) {
 		camel_folder_summary_unlock (summary);
 		return FALSE;
 	}
@@ -1660,7 +1772,7 @@ camel_folder_summary_load_from_db (CamelFolderSummary *summary,
 	cdb = camel_store_get_db (parent_store);
 
 	ret = camel_db_get_folder_uids (
-		cdb, full_name, summary->sort_by, summary->collate,
+		cdb, full_name, klass->sort_by, klass->collate,
 		summary->priv->uids, &local_error);
 
 	if (local_error != NULL && local_error->message != NULL &&
@@ -1916,13 +2028,13 @@ save_message_infos_to_db (CamelFolderSummary *summary,
 }
 
 /**
- * camel_folder_summary_save_to_db:
+ * camel_folder_summary_save:
  *
- * Since: 2.24
+ * Since: 3.24
  **/
 gboolean
-camel_folder_summary_save_to_db (CamelFolderSummary *summary,
-                                 GError **error)
+camel_folder_summary_save (CamelFolderSummary *summary,
+			   GError **error)
 {
 	CamelStore *parent_store;
 	CamelDB *cdb;
@@ -1931,7 +2043,7 @@ camel_folder_summary_save_to_db (CamelFolderSummary *summary,
 
 	g_return_val_if_fail (summary != NULL, FALSE);
 
-	if (!(summary->flags & CAMEL_FOLDER_SUMMARY_DIRTY) ||
+	if (!(summary->priv->flags & CAMEL_FOLDER_SUMMARY_DIRTY) ||
 	    is_in_memory_summary (summary))
 		return TRUE;
 
@@ -1943,13 +2055,13 @@ camel_folder_summary_save_to_db (CamelFolderSummary *summary,
 
 	camel_folder_summary_lock (summary);
 
-	d (printf ("\ncamel_folder_summary_save_to_db called \n"));
+	d (printf ("\ncamel_folder_summary_save called \n"));
 
-	summary->flags &= ~CAMEL_FOLDER_SUMMARY_DIRTY;
+	summary->priv->flags &= ~CAMEL_FOLDER_SUMMARY_DIRTY;
 
 	count = cfs_count_dirty (summary);
 	if (!count) {
-		gboolean res = camel_folder_summary_header_save_to_db (summary, error);
+		gboolean res = camel_folder_summary_header_save (summary, error);
 		camel_folder_summary_unlock (summary);
 		return res;
 	}
@@ -1957,7 +2069,7 @@ camel_folder_summary_save_to_db (CamelFolderSummary *summary,
 	ret = save_message_infos_to_db (summary, error);
 	if (ret != 0) {
 		/* Failed, so lets reset the flag */
-		summary->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
+		summary->priv->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
 		camel_folder_summary_unlock (summary);
 		return FALSE;
 	}
@@ -1979,15 +2091,15 @@ camel_folder_summary_save_to_db (CamelFolderSummary *summary,
 
 		ret = save_message_infos_to_db (summary, error);
 		if (ret != 0) {
-			summary->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
+			summary->priv->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
 			camel_folder_summary_unlock (summary);
 			return FALSE;
 		}
 	}
 
-	record = CAMEL_FOLDER_SUMMARY_GET_CLASS (summary)->summary_header_to_db (summary, error);
+	record = CAMEL_FOLDER_SUMMARY_GET_CLASS (summary)->summary_header_save (summary, error);
 	if (!record) {
-		summary->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
+		summary->priv->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
 		camel_folder_summary_unlock (summary);
 		return FALSE;
 	}
@@ -2000,7 +2112,7 @@ camel_folder_summary_save_to_db (CamelFolderSummary *summary,
 
 	if (ret != 0) {
 		camel_db_abort_transaction (cdb, NULL);
-		summary->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
+		summary->priv->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
 		camel_folder_summary_unlock (summary);
 		return FALSE;
 	}
@@ -2012,13 +2124,13 @@ camel_folder_summary_save_to_db (CamelFolderSummary *summary,
 }
 
 /**
- * camel_folder_summary_header_save_to_db:
+ * camel_folder_summary_header_save:
  *
- * Since: 2.24
+ * Since: 3.24
  **/
 gboolean
-camel_folder_summary_header_save_to_db (CamelFolderSummary *summary,
-                                        GError **error)
+camel_folder_summary_header_save (CamelFolderSummary *summary,
+				  GError **error)
 {
 	CamelStore *parent_store;
 	CamelFIRecord *record;
@@ -2035,9 +2147,9 @@ camel_folder_summary_header_save_to_db (CamelFolderSummary *summary,
 	cdb = camel_store_get_db (parent_store);
 	camel_folder_summary_lock (summary);
 
-	d (printf ("\ncamel_folder_summary_header_save_to_db called \n"));
+	d (printf ("\ncamel_folder_summary_header_save called \n"));
 
-	record = CAMEL_FOLDER_SUMMARY_GET_CLASS (summary)->summary_header_to_db (summary, error);
+	record = CAMEL_FOLDER_SUMMARY_GET_CLASS (summary)->summary_header_save (summary, error);
 	if (!record) {
 		camel_folder_summary_unlock (summary);
 		return FALSE;
@@ -2062,34 +2174,34 @@ camel_folder_summary_header_save_to_db (CamelFolderSummary *summary,
 }
 
 /**
- * camel_folder_summary_header_load_from_db:
+ * camel_folder_summary_header_load:
  *
- * Since: 2.24
+ * Since: 3.24
  **/
 gboolean
-camel_folder_summary_header_load_from_db (CamelFolderSummary *summary,
-                                          CamelStore *store,
-                                          const gchar *folder_name,
-                                          GError **error)
+camel_folder_summary_header_load (CamelFolderSummary *summary,
+				  CamelStore *store,
+				  const gchar *folder_name,
+				  GError **error)
 {
 	CamelDB *cdb;
 	CamelFIRecord *record;
 	gboolean ret = FALSE;
 
-	d (printf ("\ncamel_folder_summary_header_load_from_db called \n"));
+	d (printf ("\ncamel_folder_summary_header_load called \n"));
 
 	if (is_in_memory_summary (summary))
 		return TRUE;
 
 	camel_folder_summary_lock (summary);
-	camel_folder_summary_save_to_db (summary, NULL);
+	camel_folder_summary_save (summary, NULL);
 
 	cdb = camel_store_get_db (store);
 
 	record = g_new0 (CamelFIRecord, 1);
 	camel_db_read_folder_info_record (cdb, folder_name, record, error);
 
-	ret = CAMEL_FOLDER_SUMMARY_GET_CLASS (summary)->summary_header_from_db (summary, record);
+	ret = CAMEL_FOLDER_SUMMARY_GET_CLASS (summary)->summary_header_load (summary, record);
 
 	camel_folder_summary_unlock (summary);
 
@@ -2375,7 +2487,7 @@ void
 camel_folder_summary_touch (CamelFolderSummary *summary)
 {
 	camel_folder_summary_lock (summary);
-	summary->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
+	summary->priv->flags |= CAMEL_FOLDER_SUMMARY_DIRTY;
 	camel_folder_summary_unlock (summary);
 }
 

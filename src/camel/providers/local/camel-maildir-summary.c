@@ -125,6 +125,8 @@ camel_maildir_summary_class_init (CamelMaildirSummaryClass *class)
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
 	folder_summary_class->message_info_type = CAMEL_TYPE_MAILDIR_MESSAGE_INFO;
+	folder_summary_class->sort_by = "dreceived";
+	folder_summary_class->collate = NULL;
 	folder_summary_class->message_info_new_from_header = message_info_new_from_header;
 	folder_summary_class->next_uid_string = maildir_summary_next_uid_string;
 
@@ -149,7 +151,7 @@ camel_maildir_summary_init (CamelMaildirSummary *maildir_summary)
 		CAMEL_MAILDIR_SUMMARY_GET_PRIVATE (maildir_summary);
 
 	/* set unique file version */
-	folder_summary->version += CAMEL_MAILDIR_SUMMARY_VERSION;
+	camel_folder_summary_set_version (folder_summary, camel_folder_summary_get_version (folder_summary) + CAMEL_MAILDIR_SUMMARY_VERSION);
 
 	if (gethostname (hostname, 256) == 0) {
 		maildir_summary->priv->hostname = g_strdup (hostname);
@@ -179,8 +181,6 @@ CamelMaildirSummary
 
 		parent_store = camel_folder_get_parent_store (folder);
 		camel_db_set_collate (camel_store_get_db (parent_store), "dreceived", NULL, NULL);
-		((CamelFolderSummary *) o)->sort_by = "dreceived";
-		((CamelFolderSummary *) o)->collate = NULL;
 	}
 	camel_local_summary_construct ((CamelLocalSummary *) o, maildirdir, index);
 	return o;

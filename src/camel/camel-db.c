@@ -1953,12 +1953,12 @@ camel_db_write_folder_info_record (CamelDB *cdb,
 
 	ins_query = sqlite3_mprintf (
 		"INSERT INTO folders VALUES ("
-		"%Q, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %Q ) ",
+		"%Q, %d, %d, %d, %lld, %d, %d, %d, %d, %d, %d, %Q ) ",
 		record->folder_name,
 		record->version,
 		record->flags,
 		record->nextuid,
-		record->time,
+		record->timestamp,
 		record->saved_count,
 		record->unread_count,
 		record->deleted_count,
@@ -2014,7 +2014,7 @@ read_fir_callback (gpointer ref,
 				rfd->record->nextuid = cols[i] ? strtoul (cols[i], NULL, 10) : 0;
 				break;
 			case CAMEL_DB_COLUMN_TIME:
-				rfd->record->time = cols[i] ? strtoul (cols[i], NULL, 10) : 0;
+				rfd->record->timestamp = cols[i] ? g_ascii_strtoll (cols[i], NULL, 10) : 0;
 				break;
 			case CAMEL_DB_COLUMN_SAVED_COUNT:
 				rfd->record->saved_count = cols[i] ? strtoul (cols[i], NULL, 10) : 0;

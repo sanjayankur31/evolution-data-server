@@ -76,17 +76,6 @@ typedef enum {
 struct _CamelFolderSummary {
 	GObject parent;
 	CamelFolderSummaryPrivate *priv;
-
-	/* header info */
-	guint32 version;	/* version of file loaded/loading */
-	time_t time;		/* timestamp for this summary (for implementors to use) */
-	CamelFolderSummaryFlags flags;
-
-	const gchar *collate;
-	const gchar *sort_by;
-
-	/* Future ABI expansion */
-	gpointer later[4];
 };
 
 struct _CamelMIRecord;
@@ -96,13 +85,15 @@ struct _CamelFolderSummaryClass {
 	GObjectClass parent_class;
 
 	GType message_info_type;
+	const gchar *collate;
+	const gchar *sort_by;
 
-	/* Load/Save folder summary from DB*/
-	gboolean	(*summary_header_from_db)
+	/* Load/Save folder summary*/
+	gboolean	(*summary_header_load)
 					(CamelFolderSummary *summary,
 					 struct _CamelFIRecord *fir);
 	struct _CamelFIRecord *
-			(*summary_header_to_db)
+			(*summary_header_save)
 					(CamelFolderSummary *summary,
 					 GError **error);
 
@@ -139,7 +130,19 @@ CamelFolderSummary *
 
 struct _CamelFolder *
 		camel_folder_summary_get_folder	(CamelFolderSummary *summary);
-
+guint32		camel_folder_summary_get_flags	(CamelFolderSummary *summary);
+void		camel_folder_summary_set_flags	(CamelFolderSummary *summary,
+						 guint32 flags);
+gint64		camel_folder_summary_get_timestamp
+						(CamelFolderSummary *summary);
+void		camel_folder_summary_set_timestamp
+						(CamelFolderSummary *summary,
+						 gint64 timestamp);
+guint32		camel_folder_summary_get_version
+						(CamelFolderSummary *summary);
+void		camel_folder_summary_set_version
+						(CamelFolderSummary *summary,
+						 guint32 version);
 guint32		camel_folder_summary_get_saved_count
 						(CamelFolderSummary *summary);
 guint32		camel_folder_summary_get_unread_count
@@ -165,20 +168,19 @@ guint32		camel_folder_summary_get_next_uid
 gchar *		camel_folder_summary_next_uid_string
 						(CamelFolderSummary *summary);
 
-/* load/save the full summary from/to the db */
-gboolean	camel_folder_summary_save_to_db	(CamelFolderSummary *summary,
+/* load/save the full summary */
+gboolean	camel_folder_summary_save	(CamelFolderSummary *summary,
 						 GError **error);
-gboolean	camel_folder_summary_load_from_db
-						(CamelFolderSummary *summary,
+gboolean	camel_folder_summary_load	(CamelFolderSummary *summary,
 						 GError **error);
 
 /* only load the header */
-gboolean	camel_folder_summary_header_load_from_db
+gboolean	camel_folder_summary_header_load
 						(CamelFolderSummary *summary,
 						 struct _CamelStore *store,
 						 const gchar *folder_name,
 						 GError **error);
-gboolean	camel_folder_summary_header_save_to_db
+gboolean	camel_folder_summary_header_save
 						(CamelFolderSummary *summary,
 						 GError **error);
 

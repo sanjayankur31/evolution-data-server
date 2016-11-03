@@ -1943,7 +1943,7 @@ do_search_in_memory (CamelFolder *search_in_folder,
 
 	if (search_in_folder &&
 	    camel_folder_get_folder_summary (search_in_folder) &&
-	    (camel_folder_get_folder_summary (search_in_folder)->flags & CAMEL_FOLDER_SUMMARY_IN_MEMORY_ONLY) != 0)
+	    (camel_folder_summary_get_flags (camel_folder_get_folder_summary (search_in_folder)) & CAMEL_FOLDER_SUMMARY_IN_MEMORY_ONLY) != 0)
 		return TRUE;
 
 	if (!expr)
@@ -2084,7 +2084,7 @@ camel_folder_search_count (CamelFolderSearch *search,
 		parent_store = camel_folder_get_parent_store (search->priv->folder);
 
 		/* Sync the db, so that we search the db for changes */
-		camel_folder_summary_save_to_db (camel_folder_get_folder_summary (search->priv->folder), error);
+		camel_folder_summary_save (camel_folder_get_folder_summary (search->priv->folder), error);
 
 		dd (printf ("sexp is : [%s]\n", expr));
 		tmp1 = camel_db_sqlize_string (full_name);
@@ -2258,7 +2258,7 @@ camel_folder_search_search (CamelFolderSearch *search,
 		parent_store = camel_folder_get_parent_store (search->priv->folder);
 
 		/* Sync the db, so that we search the db for changes */
-		camel_folder_summary_save_to_db (camel_folder_get_folder_summary (search->priv->folder), error);
+		camel_folder_summary_save (camel_folder_get_folder_summary (search->priv->folder), error);
 
 		dd (printf ("sexp is : [%s]\n", expr));
 		tmp1 = camel_db_sqlize_string (full_name);
