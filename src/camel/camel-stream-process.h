@@ -49,12 +49,11 @@ G_BEGIN_DECLS
 
 typedef struct _CamelStreamProcess CamelStreamProcess;
 typedef struct _CamelStreamProcessClass CamelStreamProcessClass;
+typedef struct _CamelStreamProcessPrivate CamelStreamProcessPrivate;
 
 struct _CamelStreamProcess {
 	CamelStream parent;
-
-	gint sockfd;
-	pid_t childpid;
+	CamelStreamProcessPrivate *priv;
 };
 
 struct _CamelStreamProcessClass {

@@ -231,6 +231,14 @@ gboolean	camel_data_wrapper_construct_from_input_stream_finish
 						(CamelDataWrapper *data_wrapper,
 						 GAsyncResult *result,
 						 GError **error);
+gsize		camel_data_wrapper_calculate_size_sync
+						(CamelDataWrapper *data_wrapper,
+						 GCancellable *cancellable,
+						 GError **error);
+gsize		camel_data_wrapper_calculate_decoded_size_sync
+						(CamelDataWrapper *data_wrapper,
+						 GCancellable *cancellable,
+						 GError **error);
 
 G_END_DECLS
 

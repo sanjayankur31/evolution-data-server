@@ -4607,13 +4607,7 @@ camel_imapx_server_append_message_sync (CamelIMAPXServer *is,
 	}
 
 	if (!camel_message_info_get_size (info)) {
-		CamelStreamNull *sn = (CamelStreamNull *) camel_stream_null_new ();
-
-		camel_data_wrapper_write_to_stream_sync (
-			CAMEL_DATA_WRAPPER (message),
-			CAMEL_STREAM (sn), NULL, NULL);
-		camel_message_info_set_size (info, sn->written);
-		g_object_unref (sn);
+		camel_message_info_set_size (info, camel_data_wrapper_calculate_size_sync (CAMEL_DATA_WRAPPER (message), NULL, NULL));
 	}
 
 	g_free (uid);

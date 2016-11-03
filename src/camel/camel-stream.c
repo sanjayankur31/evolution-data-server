@@ -33,6 +33,7 @@
 struct _CamelStreamPrivate {
 	GIOStream *base_stream;
 	GMutex base_stream_lock;
+	gboolean eos;
 };
 
 enum {
@@ -135,7 +136,7 @@ stream_read (CamelStream *stream,
 		g_object_unref (base_stream);
 	}
 
-	stream->eos = n_bytes_read <= 0;
+	stream->priv->eos = n_bytes_read <= 0;
 
 	return n_bytes_read;
 }
@@ -157,7 +158,7 @@ stream_write (CamelStream *stream,
 		gsize n_written = 0;
 
 		output_stream = g_io_stream_get_output_stream (base_stream);
-		stream->eos = FALSE;
+		stream->priv->eos = FALSE;
 
 		if (g_output_stream_write_all (output_stream, buffer, n, &n_written, cancellable, error))
 			n_bytes_written = (gssize) n_written;
@@ -219,7 +220,7 @@ stream_flush (CamelStream *stream,
 static gboolean
 stream_eos (CamelStream *stream)
 {
-	return stream->eos;
+	return stream->priv->eos;
 }
 
 static goffset
@@ -278,7 +279,7 @@ stream_seek (GSeekable *seekable,
 	base_stream = camel_stream_ref_base_stream (stream);
 
 	if (G_IS_SEEKABLE (base_stream)) {
-		stream->eos = FALSE;
+		stream->priv->eos = FALSE;
 		success = g_seekable_seek (
 			G_SEEKABLE (base_stream),
 			offset, type, cancellable, error);

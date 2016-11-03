@@ -529,13 +529,7 @@ local_summary_add (CamelLocalSummary *cls,
 
 	/* we need to calculate the size ourselves */
 	if (camel_message_info_get_size (mi) == 0) {
-		CamelStreamNull *sn = (CamelStreamNull *) camel_stream_null_new ();
-
-		camel_data_wrapper_write_to_stream_sync (
-			(CamelDataWrapper *) msg,
-			(CamelStream *) sn, NULL, NULL);
-		camel_message_info_set_size (mi, sn->written);
-		g_object_unref (sn);
+		camel_message_info_set_size (mi, camel_data_wrapper_calculate_size_sync (CAMEL_DATA_WRAPPER (msg), NULL, NULL));
 	}
 
 	camel_message_info_set_flags (mi, CAMEL_MESSAGE_FOLDER_NOXEV, 0);

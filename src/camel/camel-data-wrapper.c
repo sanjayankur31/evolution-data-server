@@ -29,6 +29,7 @@
 #include "camel-mime-filter-crlf.h"
 #include "camel-stream-filter.h"
 #include "camel-stream-mem.h"
+#include "camel-stream-null.h"
 
 #define d(x)
 
@@ -1544,3 +1545,72 @@ camel_data_wrapper_construct_from_input_stream_finish (CamelDataWrapper *data_wr
 	return g_task_propagate_boolean (G_TASK (result), error);
 }
 
+/**
+ * camel_data_wrapper_calculate_size_sync:
+ * @data_wrapper: a #CamelDataWrapper
+ * @cancellable: a #GCancellable, or %NULL
+ * @error: return location for a #GError, or %NULL
+ *
+ * Calculates size of the @data_wrapper by saving it to a null-stream
+ * and returns how many bytes had been written. It's using
+ * camel_data_wrapper_write_to_stream_sync() internally.
+ *
+ * Returns: how many bytes the @data_wrapper would use when saved,
+ *   or -1 on error.
+ *
+ * Since: 3.24
+ **/
+gsize
+camel_data_wrapper_calculate_size_sync (CamelDataWrapper *data_wrapper,
+					GCancellable *cancellable,
+					GError **error)
+{
+	CamelStream *stream;
+	gsize bytes_written = -1;
+
+	g_return_val_if_fail (CAMEL_IS_DATA_WRAPPER (data_wrapper), -1);
+
+	stream = camel_stream_null_new ();
+
+	if (camel_data_wrapper_write_to_stream_sync (data_wrapper, stream, cancellable, error))
+		bytes_written = camel_stream_null_get_bytes_written (CAMEL_STREAM_NULL (stream));
+
+	g_object_unref (stream);
+
+	return bytes_written;
+}
+
+/**
+ * camel_data_wrapper_calculate_decoded_size_sync:
+ * @data_wrapper: a #CamelDataWrapper
+ * @cancellable: a #GCancellable, or %NULL
+ * @error: return location for a #GError, or %NULL
+ *
+ * Calculates decoded size of the @data_wrapper by saving it to a null-stream
+ * and returns how many bytes had been written. It's using
+ * camel_data_wrapper_decode_to_stream_sync() internally.
+ *
+ * Returns: how many bytes the @data_wrapper would use when saved,
+ *   or -1 on error.
+ *
+ * Since: 3.24
+ **/
+gsize
+camel_data_wrapper_calculate_decoded_size_sync (CamelDataWrapper *data_wrapper,
+						GCancellable *cancellable,
+						GError **error)
+{
+	CamelStream *stream;
+	gsize bytes_written = -1;
+
+	g_return_val_if_fail (CAMEL_IS_DATA_WRAPPER (data_wrapper), -1);
+
+	stream = camel_stream_null_new ();
+
+	if (camel_data_wrapper_decode_to_stream_sync (data_wrapper, stream, cancellable, error))
+		bytes_written = camel_stream_null_get_bytes_written (CAMEL_STREAM_NULL (stream));
+
+	g_object_unref (stream);
+
+	return bytes_written;
+}

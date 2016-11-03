@@ -1644,7 +1644,7 @@ smtp_data (CamelSmtpTransport *transport,
 	CamelStream *filtered_stream;
 	gchar *cmdbuf, *respbuf = NULL;
 	CamelMimeFilter *filter;
-	CamelStreamNull *null;
+	gsize bytes_written;
 	gint ret;
 
 	/* If the server doesn't support 8BITMIME, set our required encoding to be 7bit */
@@ -1714,22 +1714,18 @@ smtp_data (CamelSmtpTransport *transport,
 	}
 
 	/* find out how large the message is... */
-	null = CAMEL_STREAM_NULL (camel_stream_null_new ());
-	camel_data_wrapper_write_to_stream_sync (
-		CAMEL_DATA_WRAPPER (message),
-		CAMEL_STREAM (null), NULL, NULL);
+	bytes_written = camel_data_wrapper_calculate_size_sync (CAMEL_DATA_WRAPPER (message), NULL, NULL);
 
 	/* Set the upload timeout to an equal of 512 bytes per second */
-	smtp_maybe_update_socket_timeout (ostream, null->written / 512);
+	smtp_maybe_update_socket_timeout (ostream, bytes_written / 512);
 
 	filtered_stream = camel_stream_filter_new (ostream);
 
 	/* setup progress reporting for message sending... */
-	filter = camel_mime_filter_progress_new (cancellable, null->written);
+	filter = camel_mime_filter_progress_new (cancellable, bytes_written);
 	camel_stream_filter_add (
 		CAMEL_STREAM_FILTER (filtered_stream), filter);
 	g_object_unref (filter);
-	g_object_unref (null);
 
 	/* setup LF->CRLF conversion */
 	filter = camel_mime_filter_crlf_new (

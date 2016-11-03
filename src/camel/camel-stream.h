@@ -58,8 +58,6 @@ typedef struct _CamelStreamPrivate CamelStreamPrivate;
 struct _CamelStream {
 	GObject parent;
 	CamelStreamPrivate *priv;
-
-	gboolean eos;
 };
 
 struct _CamelStreamClass {
