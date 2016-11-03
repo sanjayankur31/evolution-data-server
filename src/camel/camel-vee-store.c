@@ -220,7 +220,7 @@ vee_store_get_folder_sync (CamelStore *store,
 	gsize name_len;
 
 	vf = (CamelVeeFolder *) camel_vee_folder_new (store, folder_name, flags);
-	if (vf && ((vf->flags & CAMEL_STORE_FOLDER_PRIVATE) == 0)) {
+	if (vf && ((camel_vee_folder_get_flags (vf) & CAMEL_STORE_FOLDER_PRIVATE) == 0)) {
 		const gchar *full_name;
 
 		full_name = camel_folder_get_full_name (CAMEL_FOLDER (vf));
@@ -433,7 +433,7 @@ vee_store_delete_folder_sync (CamelStore *store,
 			camel_object_set_state_filename (object, NULL);
 		}
 
-		if ((((CamelVeeFolder *) folder)->flags & CAMEL_STORE_FOLDER_PRIVATE) == 0) {
+		if ((camel_vee_folder_get_flags (CAMEL_VEE_FOLDER (folder)) & CAMEL_STORE_FOLDER_PRIVATE) == 0) {
 			/* what about now-empty parents?  ignore? */
 			change_folder (store, folder_name, CHANGE_DELETE, -1);
 		}
@@ -493,7 +493,7 @@ vee_store_rename_folder_sync (CamelStore *store,
 		folder = camel_object_bag_reserve (camel_store_get_folders_bag (store), name);
 		if (folder == NULL) {
 			/* create a dummy vFolder for this, makes get_folder_info simpler */
-			folder = camel_vee_folder_new (store, name, ((CamelVeeFolder *) oldfolder)->flags);
+			folder = camel_vee_folder_new (store, name, camel_vee_folder_get_flags (CAMEL_VEE_FOLDER (oldfolder)));
 			camel_object_bag_add (camel_store_get_folders_bag (store), name, folder);
 			change_folder (store, name, CHANGE_ADD | CHANGE_NOSELECT, 0);
 			/* FIXME: this sort of leaks folder, nobody owns a ref to it but us */

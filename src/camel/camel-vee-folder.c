@@ -46,6 +46,7 @@ typedef struct _FolderChangedData FolderChangedData;
 	((obj), CAMEL_TYPE_VEE_FOLDER, CamelVeeFolderPrivate))
 
 struct _CamelVeeFolderPrivate {
+	guint32 flags;		/* folder open flags */
 	gboolean destroyed;
 	GList *subfolders;		/* lock using subfolder_lock before changing/accessing */
 	GHashTable *ignore_changed;	/* hash of subfolder pointers to ignore the next folder's 'changed' signal */
@@ -1258,6 +1259,14 @@ camel_vee_folder_init (CamelVeeFolder *vee_folder)
 		(GDestroyNotify) vee_folder_changed_data_free);
 }
 
+/**
+ * camel_vee_folder_construct:
+ * @vf: a #CamelVeeFolder
+ * @flags: flags for the @vf
+ *
+ * Initializes internal structures of the @vf. This is meant to be
+ * called by the descendants of #CamelVeeFolder.
+ **/
 void
 camel_vee_folder_construct (CamelVeeFolder *vf,
                             guint32 flags)
@@ -1265,7 +1274,7 @@ camel_vee_folder_construct (CamelVeeFolder *vf,
 	CamelFolder *folder = (CamelFolder *) vf;
 	CamelStore *parent_store;
 
-	vf->flags = flags;
+	vf->priv->flags = flags;
 
 	parent_store = camel_folder_get_parent_store (CAMEL_FOLDER (vf));
 	if (CAMEL_IS_VEE_STORE (parent_store))
@@ -1295,6 +1304,22 @@ camel_vee_folder_construct (CamelVeeFolder *vf,
 		/* set/load persistent state */
 		camel_object_state_read (CAMEL_OBJECT (vf));
 	}
+}
+
+/**
+ * camel_vee_folder_get_flags:
+ * @vf: a #CamelVeeFolder
+ *
+ * Returns: flags of @vf, as set by camel_vee_folder_construct()
+ *
+ * Since: 3.24
+ **/
+guint32
+camel_vee_folder_get_flags (CamelVeeFolder *vf)
+{
+	g_return_val_if_fail (CAMEL_IS_VEE_FOLDER (vf), 0);
+
+	return vf->priv->flags;
 }
 
 /**

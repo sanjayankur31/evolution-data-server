@@ -57,8 +57,6 @@ typedef struct _CamelVeeFolderPrivate CamelVeeFolderPrivate;
 struct _CamelVeeFolder {
 	CamelFolder parent;
 	CamelVeeFolderPrivate *priv;
-
-	guint32 flags;		/* folder open flags */
 };
 
 struct _CamelVeeFolderClass {
@@ -96,7 +94,7 @@ CamelFolder *	camel_vee_folder_new			(CamelStore *parent_store,
 							 guint32 flags);
 void		camel_vee_folder_construct		(CamelVeeFolder *vf,
 							 guint32 flags);
-
+guint32		camel_vee_folder_get_flags		(CamelVeeFolder *vf);
 CamelFolder *	camel_vee_folder_get_location		(CamelVeeFolder *vf,
 							 const CamelVeeMessageInfo *vinfo,
 							 gchar **realuid);
