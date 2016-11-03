@@ -31,6 +31,11 @@
 #include "camel-vtrash-folder.h"
 #include "camel-string-utils.h"
 
+struct _CamelVTrashFolderPrivate {
+	CamelVTrashFolderType type;
+	guint32 bit;
+};
+
 static struct {
 	const gchar *full_name;
 	const gchar *name;
@@ -104,7 +109,7 @@ vtrash_folder_append_message_sync (CamelFolder *folder,
 {
 	g_set_error (
 		error, CAMEL_ERROR, CAMEL_ERROR_GENERIC, "%s",
-		_(vdata[((CamelVTrashFolder *) folder)->type].error_copy));
+		_(vdata[((CamelVTrashFolder *) folder)->priv->type].error_copy));
 
 	return FALSE;
 }
@@ -123,7 +128,7 @@ vtrash_folder_transfer_messages_to_sync (CamelFolder *source,
 	GHashTable *batch = NULL;
 	const gchar *tuid;
 	struct _transfer_data *md;
-	guint32 sbit = ((CamelVTrashFolder *) source)->bit;
+	guint32 sbit = ((CamelVTrashFolder *) source)->priv->bit;
 
 	/* This is a special case of transfer_messages_to: Either the
 	 * source or the destination is a vtrash folder (but not both
@@ -138,7 +143,7 @@ vtrash_folder_transfer_messages_to_sync (CamelFolder *source,
 		if (!delete_originals) {
 			g_set_error (
 				error, CAMEL_ERROR, CAMEL_ERROR_GENERIC, "%s",
-				_(vdata[((CamelVTrashFolder *) dest)->type].error_copy));
+				_(vdata[((CamelVTrashFolder *) dest)->priv->type].error_copy));
 			return FALSE;
 		}
 
@@ -146,7 +151,7 @@ vtrash_folder_transfer_messages_to_sync (CamelFolder *source,
 		for (i = 0; i < uids->len; i++)
 			camel_folder_set_message_flags (
 				source, uids->pdata[i],
-				((CamelVTrashFolder *) dest)->bit, ~0);
+				((CamelVTrashFolder *) dest)->priv->bit, ~0);
 		return TRUE;
 	}
 
@@ -218,6 +223,8 @@ camel_vtrash_folder_class_init (CamelVTrashFolderClass *class)
 {
 	CamelFolderClass *folder_class;
 
+	g_type_class_add_private (class, sizeof (CamelVTrashFolderPrivate));
+
 	folder_class = CAMEL_FOLDER_CLASS (class);
 	folder_class->append_message_sync = vtrash_folder_append_message_sync;
 	folder_class->transfer_messages_to_sync = vtrash_folder_transfer_messages_to_sync;
@@ -226,6 +233,7 @@ camel_vtrash_folder_class_init (CamelVTrashFolderClass *class)
 static void
 camel_vtrash_folder_init (CamelVTrashFolder *vtrash_folder)
 {
+	vtrash_folder->priv = G_TYPE_INSTANCE_GET_PRIVATE (vtrash_folder, CAMEL_TYPE_VTRASH_FOLDER, CamelVTrashFolderPrivate);
 }
 
 /**
@@ -259,8 +267,24 @@ camel_vtrash_folder_new (CamelStore *parent_store,
 
 	camel_folder_set_flags (CAMEL_FOLDER (vtrash), camel_folder_get_flags (CAMEL_FOLDER (vtrash)) | vdata[type].flags);
 	camel_vee_folder_set_expression ((CamelVeeFolder *) vtrash, vdata[type].expr);
-	vtrash->bit = vdata[type].bit;
-	vtrash->type = type;
+	vtrash->priv->bit = vdata[type].bit;
+	vtrash->priv->type = type;
 
 	return (CamelFolder *) vtrash;
+}
+
+/**
+ * camel_vtrash_folder_get_folder_type:
+ * @vtrash_folder: a #CamelVTrashFolder
+ *
+ * Returns: a @vtrash_folder folder type (#CamelVTrashFolderType)
+ *
+ * Since: 3.24
+ **/
+CamelVTrashFolderType
+camel_vtrash_folder_get_folder_type (CamelVTrashFolder *vtrash_folder)
+{
+	g_return_val_if_fail (CAMEL_IS_VTRASH_FOLDER (vtrash_folder), CAMEL_VTRASH_FOLDER_LAST);
+
+	return vtrash_folder->priv->type;
 }

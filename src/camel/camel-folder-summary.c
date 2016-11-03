@@ -355,8 +355,8 @@ folder_summary_update_counts_by_flags (CamelFolderSummary *summary,
 	if (summary->priv->folder && CAMEL_IS_VTRASH_FOLDER (summary->priv->folder)) {
 		CamelVTrashFolder *vtrash = CAMEL_VTRASH_FOLDER (summary->priv->folder);
 
-		is_junk_folder = vtrash && vtrash->type == CAMEL_VTRASH_FOLDER_JUNK;
-		is_trash_folder = vtrash && vtrash->type == CAMEL_VTRASH_FOLDER_TRASH;
+		is_junk_folder = vtrash && camel_vtrash_folder_get_folder_type (vtrash) == CAMEL_VTRASH_FOLDER_JUNK;
+		is_trash_folder = vtrash && camel_vtrash_folder_get_folder_type (vtrash) == CAMEL_VTRASH_FOLDER_TRASH;
 	}
 
 	if (!(flags & CAMEL_MESSAGE_SEEN))
@@ -554,8 +554,8 @@ camel_folder_summary_replace_flags (CamelFolderSummary *summary,
 	if (summary->priv->folder && CAMEL_IS_VTRASH_FOLDER (summary->priv->folder)) {
 		CamelVTrashFolder *vtrash = CAMEL_VTRASH_FOLDER (summary->priv->folder);
 
-		is_junk_folder = vtrash && vtrash->type == CAMEL_VTRASH_FOLDER_JUNK;
-		is_trash_folder = vtrash && vtrash->type == CAMEL_VTRASH_FOLDER_TRASH;
+		is_junk_folder = vtrash && camel_vtrash_folder_get_folder_type (vtrash) == CAMEL_VTRASH_FOLDER_JUNK;
+		is_trash_folder = vtrash && camel_vtrash_folder_get_folder_type (vtrash) == CAMEL_VTRASH_FOLDER_TRASH;
 	}
 
 	added_flags = new_flags & (~(old_flags & new_flags));
