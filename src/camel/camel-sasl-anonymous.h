@@ -50,12 +50,11 @@ G_BEGIN_DECLS
 
 typedef struct _CamelSaslAnonymous CamelSaslAnonymous;
 typedef struct _CamelSaslAnonymousClass CamelSaslAnonymousClass;
+typedef struct _CamelSaslAnonymousPrivate CamelSaslAnonymousPrivate;
 
 struct _CamelSaslAnonymous {
 	CamelSasl parent;
-
-	gchar *trace_info;
-	CamelSaslAnonTraceType type;
+	CamelSaslAnonymousPrivate *priv;
 };
 
 struct _CamelSaslAnonymousClass {
