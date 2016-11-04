@@ -198,6 +198,8 @@ camel_block_file_class_init (CamelBlockFileClass *class)
 {
 	GObjectClass *object_class;
 
+	g_type_class_add_private (class, sizeof (CamelBlockFilePrivate));
+
 	object_class = G_OBJECT_CLASS (class);
 	object_class->finalize = block_file_finalize;
 
