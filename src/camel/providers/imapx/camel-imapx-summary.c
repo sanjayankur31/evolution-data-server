@@ -31,6 +31,9 @@
 #include "camel-imapx-message-info.h"
 #include "camel-imapx-summary.h"
 
+/* Don't do DB sort. Its pretty slow to load */
+/* #define SORT_DB 1 */
+
 #define CAMEL_IMAPX_SUMMARY_VERSION (4)
 
 G_DEFINE_TYPE (
@@ -106,8 +109,10 @@ camel_imapx_summary_class_init (CamelIMAPXSummaryClass *class)
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
 	folder_summary_class->message_info_type = CAMEL_TYPE_IMAPX_MESSAGE_INFO;
+#ifdef SORT_DB
 	folder_summary_class->sort_by = "uid";
 	folder_summary_class->collate = "imapx_uid_sort";
+#endif
 	folder_summary_class->summary_header_load = imapx_summary_summary_header_load;
 	folder_summary_class->summary_header_save = imapx_summary_summary_header_save;
 }
@@ -117,6 +122,7 @@ camel_imapx_summary_init (CamelIMAPXSummary *obj)
 {
 }
 
+#ifdef SORT_DB
 static gint
 sort_uid_cmp (gpointer enc,
               gint len1,
@@ -144,6 +150,7 @@ sort_uid_cmp (gpointer enc,
 
 	return (a1 < a2) ? -1 : (a1 > a2) ? 1 : 0;
 }
+#endif
 
 /**
  * camel_imapx_summary_new:
@@ -157,18 +164,18 @@ sort_uid_cmp (gpointer enc,
 CamelFolderSummary *
 camel_imapx_summary_new (CamelFolder *folder)
 {
+#ifdef SORT_DB
 	CamelStore *parent_store;
+#endif
 	CamelFolderSummary *summary;
 	GError *local_error = NULL;
 
-	parent_store = camel_folder_get_parent_store (folder);
-
 	summary = g_object_new (CAMEL_TYPE_IMAPX_SUMMARY, "folder", folder, NULL);
 
-	/* Don't do DB sort. Its pretty slow to load */
-	if (folder && 0) {
-		camel_db_set_collate (camel_store_get_db (parent_store), "uid", "imapx_uid_sort", (CamelDBCollate) sort_uid_cmp);
-	}
+#ifdef SORT_DB
+	parent_store = camel_folder_get_parent_store (folder);
+	camel_db_set_collate (camel_store_get_db (parent_store), "uid", "imapx_uid_sort", (CamelDBCollate) sort_uid_cmp);
+#endif
 
 	if (!camel_folder_summary_load (summary, &local_error)) {
 		/* FIXME: Isn't this dangerous ? We clear the summary

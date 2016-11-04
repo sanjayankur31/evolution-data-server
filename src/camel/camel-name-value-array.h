@@ -23,6 +23,7 @@
 #define CAMEL_NAME_VALUE_ARRAY_H
 
 #include <glib-object.h>
+#include <camel/camel-enums.h>
 
 G_BEGIN_DECLS
 
@@ -53,7 +54,7 @@ gboolean	camel_name_value_array_get	(const CamelNameValueArray *array,
 						 const gchar **out_value);
 const gchar *	camel_name_value_array_get_named
 						(const CamelNameValueArray *array,
-						 gboolean case_sensitive,
+						 CamelCompareType compare_type,
 						 const gchar *name);
 const gchar *	camel_name_value_array_get_name	(const CamelNameValueArray *array,
 						 guint index);
@@ -76,20 +77,20 @@ gboolean	camel_name_value_array_set_value
 						 const gchar *value);
 gboolean	camel_name_value_array_set_named
 						(CamelNameValueArray *array,
-						 gboolean case_sensitive,
+						 CamelCompareType compare_type,
 						 const gchar *name,
 						 const gchar *value);
 gboolean	camel_name_value_array_remove	(CamelNameValueArray *array,
 						 guint index);
 guint		camel_name_value_array_remove_named
 						(CamelNameValueArray *array,
-						 gboolean case_sensitive,
+						 CamelCompareType compare_type,
 						 const gchar *name,
 						 gboolean all_occurrences);
 void		camel_name_value_array_clear	(CamelNameValueArray *array);
 gboolean	camel_name_value_array_equal	(const CamelNameValueArray *array_a,
 						 const CamelNameValueArray *array_b,
-						 gboolean case_sensitive);
+						 CamelCompareType compare_type);
 
 G_END_DECLS
 

@@ -196,7 +196,9 @@ camel_name_value_array_get (const CamelNameValueArray *array,
 	CamelNameValuePair *pair;
 
 	g_return_val_if_fail (array != NULL, FALSE);
-	g_return_val_if_fail (index < camel_name_value_array_get_length (array), FALSE);
+
+	if (index >= camel_name_value_array_get_length (array))
+		return FALSE;
 
 	pair = &g_array_index (arr, CamelNameValuePair, index);
 
@@ -210,14 +212,17 @@ camel_name_value_array_get (const CamelNameValueArray *array,
 
 static guint
 camel_name_value_array_find_named (const CamelNameValueArray *array,
-				   gboolean case_sensitive,
+				   CamelCompareType compare_type,
 				   const gchar *name)
 {
 	GArray *arr = (GArray *) array;
+	gboolean case_sensitive;
 	gint ii;
 
 	g_return_val_if_fail (array != NULL, (guint) -1);
 	g_return_val_if_fail (name != NULL, (guint) -1);
+
+	case_sensitive = compare_type == CAMEL_COMPARE_CASE_SENSITIVE;
 
 	for (ii = 0; ii < arr->len; ii++) {
 		CamelNameValuePair *pair = &g_array_index (arr, CamelNameValuePair, ii);
@@ -234,12 +239,12 @@ camel_name_value_array_find_named (const CamelNameValueArray *array,
 /**
  * camel_name_value_array_get_named:
  * @array: a #CamelNameValueArray
- * @case_sensitive: whether to compare names case sensitively
+ * @compare_type: a compare type, one of #CamelCompareType
  * @name: a name
  *
  * Returns the value of the first element named @name, or %NULL when there
- * is no element of such @name in the @array. The @case_sensitive determines
- * whether compare names case sensitively (%TRUE) or insensitively (%FALSE).
+ * is no element of such @name in the @array. The @compare_type determines
+ * how to compare the names.
  *
  * Returns: (transfer none) (nullable): Value of the first element named @name, or %NULL.
  *
@@ -249,7 +254,7 @@ camel_name_value_array_find_named (const CamelNameValueArray *array,
  **/
 const gchar *
 camel_name_value_array_get_named (const CamelNameValueArray *array,
-				  gboolean case_sensitive,
+				  CamelCompareType compare_type,
 				  const gchar *name)
 {
 	guint index;
@@ -257,7 +262,7 @@ camel_name_value_array_get_named (const CamelNameValueArray *array,
 	g_return_val_if_fail (array != NULL, NULL);
 	g_return_val_if_fail (name != NULL, NULL);
 
-	index = camel_name_value_array_find_named (array, case_sensitive, name);
+	index = camel_name_value_array_find_named (array, compare_type, name);
 	if (index == (guint) -1)
 		return NULL;
 
@@ -285,7 +290,6 @@ camel_name_value_array_get_name (const CamelNameValueArray *array,
 	const gchar *name = NULL;
 
 	g_return_val_if_fail (array != NULL, NULL);
-	g_return_val_if_fail (index < camel_name_value_array_get_length (array), NULL);
 
 	if (!camel_name_value_array_get (array, index, &name, NULL))
 		return NULL;
@@ -314,7 +318,6 @@ camel_name_value_array_get_value (const CamelNameValueArray *array,
 	const gchar *value = NULL;
 
 	g_return_val_if_fail (array != NULL, NULL);
-	g_return_val_if_fail (index < camel_name_value_array_get_length (array), NULL);
 
 	if (!camel_name_value_array_get (array, index, NULL, &value))
 		return NULL;
@@ -467,15 +470,15 @@ camel_name_value_array_set_value (CamelNameValueArray *array,
 /**
  * camel_name_value_array_set_named:
  * @array: a #CamelNameValueArray
- * @case_sensitive: whether to compare names case sensitively
+ * @compare_type: a compare type, one of #CamelCompareType
  * @name: a name
  * @value: a value
  *
  * Finds an element named @name and sets its value to @value, or appends
- * a new element, in case no such named lement exists in the @array yet.
+ * a new element, in case no such named element exists in the @array yet.
  * In case there are more elements named with @name only the first
- * occurrence is changed. The @case_sensitive determines whether compare
- * names case sensitively (%TRUE) or insensitively (%FALSE).
+ * occurrence is changed. The @compare_type determines how to compare
+ * the names.
  *
  * Returns: Whether the @array changed.
  *
@@ -485,7 +488,7 @@ camel_name_value_array_set_value (CamelNameValueArray *array,
  **/
 gboolean
 camel_name_value_array_set_named (CamelNameValueArray *array,
-				  gboolean case_sensitive,
+				  CamelCompareType compare_type,
 				  const gchar *name,
 				  const gchar *value)
 {
@@ -496,7 +499,7 @@ camel_name_value_array_set_named (CamelNameValueArray *array,
 	g_return_val_if_fail (name != NULL, FALSE);
 	g_return_val_if_fail (value != NULL, FALSE);
 
-	index = camel_name_value_array_find_named (array, case_sensitive, name);
+	index = camel_name_value_array_find_named (array, compare_type, name);
 	if (index == (guint) -1) {
 		camel_name_value_array_append (array, name, value);
 		changed = TRUE;
@@ -533,12 +536,12 @@ camel_name_value_array_remove (CamelNameValueArray *array,
 /**
  * camel_name_value_array_remove_named:
  * @array: a #CamelNameValueArray
- * @case_sensitive: whether to compare names case sensitively
+ * @compare_type: a compare type, one of #CamelCompareType
  * @name: a name to remove
  * @all_occurrences: whether to remove all occurrences of the @name
  *
- * Removes elements of the @array with the given @name. The @case_sensitive
- * determines whether compare case sensitively (%TRUE) or insensitively (%FALSE).
+ * Removes elements of the @array with the given @name.
+ * The @compare_type determines hot to compare the names.
  * If the @all_occurrences is set to %TRUE, then every elements with the @name
  * are removed, otherwise only the first occurrence is removed.
  *
@@ -548,7 +551,7 @@ camel_name_value_array_remove (CamelNameValueArray *array,
  **/
 guint
 camel_name_value_array_remove_named (CamelNameValueArray *array,
-				     gboolean case_sensitive,
+				     CamelCompareType compare_type,
 				     const gchar *name,
 				     gboolean all_occurrences)
 {
@@ -557,7 +560,7 @@ camel_name_value_array_remove_named (CamelNameValueArray *array,
 	g_return_val_if_fail (array != NULL, 0);
 	g_return_val_if_fail (name != NULL, 0);
 
-	while (index = camel_name_value_array_find_named (array, case_sensitive, name), index != (guint) -1) {
+	while (index = camel_name_value_array_find_named (array, compare_type, name), index != (guint) -1) {
 		if (!camel_name_value_array_remove (array, index))
 			break;
 
@@ -592,7 +595,7 @@ camel_name_value_array_clear (CamelNameValueArray *array)
  * camel_name_value_array_equal:
  * @array_a: (nullable): the first #CamelNameValueArray
  * @array_b: (nullable): the second #CamelNameValueArray
- * @case_sensitive: whether to search for names case sensitively
+ * @compare_type: a compare type, one of #CamelCompareType
  *
  * Compares content of the two #CamelNameValueArray and returns whether
  * they equal. Note this is an expensive operation for large arrays.
@@ -604,7 +607,7 @@ camel_name_value_array_clear (CamelNameValueArray *array)
 gboolean
 camel_name_value_array_equal (const CamelNameValueArray *array_a,
 			      const CamelNameValueArray *array_b,
-			      gboolean case_sensitive)
+			      CamelCompareType compare_type)
 {
 	guint ii, len;
 
@@ -622,7 +625,7 @@ camel_name_value_array_equal (const CamelNameValueArray *array_a,
 		const gchar *value1, *value2;
 
 		value1 = camel_name_value_array_get_value (array_a, ii);
-		value2 = camel_name_value_array_get_named (array_b, case_sensitive,
+		value2 = camel_name_value_array_get_named (array_b, compare_type,
 			camel_name_value_array_get_name (array_a, ii));
 
 		if (g_strcmp0 (value1, value2) != 0)

@@ -51,7 +51,7 @@ struct _CamelNNTPSummaryPrivate {
 	gint xover_setup;
 };
 
-static CamelMessageInfo * message_info_new_from_header (CamelFolderSummary *, CamelHeaderRaw *);
+static CamelMessageInfo * message_info_new_from_headers (CamelFolderSummary *, const CamelNameValueArray *);
 static gboolean summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir);
 static CamelFIRecord * summary_header_save (CamelFolderSummary *s, GError **error);
 
@@ -65,7 +65,7 @@ camel_nntp_summary_class_init (CamelNNTPSummaryClass *class)
 	g_type_class_add_private (class, sizeof (CamelNNTPSummaryPrivate));
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
-	folder_summary_class->message_info_new_from_header = message_info_new_from_header;
+	folder_summary_class->message_info_new_from_headers = message_info_new_from_headers;
 	folder_summary_class->summary_header_load = summary_header_load;
 	folder_summary_class->summary_header_save = summary_header_save;
 }
@@ -92,17 +92,17 @@ camel_nntp_summary_new (CamelFolder *folder)
 }
 
 static CamelMessageInfo *
-message_info_new_from_header (CamelFolderSummary *s,
-                              CamelHeaderRaw *h)
+message_info_new_from_headers (CamelFolderSummary *summary,
+			       const CamelNameValueArray *headers)
 {
 	CamelMessageInfo *mi;
-	CamelNNTPSummary *cns = (CamelNNTPSummary *) s;
+	CamelNNTPSummary *cns = (CamelNNTPSummary *) summary;
 
 	/* error to call without this setup */
 	if (cns->priv->uid == NULL)
 		return NULL;
 
-	mi = CAMEL_FOLDER_SUMMARY_CLASS (camel_nntp_summary_parent_class)->message_info_new_from_header (s, h);
+	mi = CAMEL_FOLDER_SUMMARY_CLASS (camel_nntp_summary_parent_class)->message_info_new_from_headers (summary, headers);
 	if (mi) {
 		camel_message_info_set_uid (mi, cns->priv->uid);
 		g_free (cns->priv->uid);
@@ -164,7 +164,7 @@ add_range_xover (CamelNNTPSummary *cns,
 	CamelSettings *settings;
 	CamelService *service;
 	CamelFolderSummary *s;
-	CamelHeaderRaw *headers = NULL;
+	CamelNameValueArray *headers = NULL;
 	gchar *line, *tab;
 	gchar *host;
 	guint len;
@@ -217,6 +217,7 @@ add_range_xover (CamelNNTPSummary *cns,
 
 	count = 0;
 	total = high - low + 1;
+	headers = camel_name_value_array_new ();
 	while ((ret = camel_nntp_stream_line (nntp_stream, (guchar **) &line, &len, cancellable, error)) > 0) {
 		camel_operation_progress (cancellable, (count * 100) / total);
 		count++;
@@ -238,7 +239,7 @@ add_range_xover (CamelNNTPSummary *cns,
 			if (xover->name) {
 				line += xover->skip;
 				if (line < tab) {
-					camel_header_raw_append (&headers, xover->name, line, -1);
+					camel_name_value_array_append (headers, xover->name, line);
 					switch (xover->type) {
 					case XOVER_STRING:
 						break;
@@ -262,7 +263,7 @@ add_range_xover (CamelNNTPSummary *cns,
 			if (!camel_folder_summary_check_uid (s, cns->priv->uid)) {
 				CamelMessageInfo *mi;
 
-				mi = camel_folder_summary_info_new_from_header (s, headers);
+				mi = camel_folder_summary_info_new_from_headers (s, headers);
 				camel_message_info_set_size (mi, size);
 				camel_folder_summary_add (s, mi, FALSE);
 
@@ -279,9 +280,10 @@ add_range_xover (CamelNNTPSummary *cns,
 			cns->priv->uid = NULL;
 		}
 
-		camel_header_raw_clear (&headers);
+		camel_name_value_array_clear (headers);
 	}
 
+	camel_name_value_array_free (headers);
 	g_clear_object (&nntp_stream);
 
 	camel_operation_pop_message (cancellable);

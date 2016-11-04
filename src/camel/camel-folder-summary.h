@@ -99,9 +99,9 @@ struct _CamelFolderSummaryClass {
 
 	/* create an individual message info */
 	CamelMessageInfo *
-			(*message_info_new_from_header)
+			(*message_info_new_from_headers)
 					(CamelFolderSummary *summary,
-					 CamelHeaderRaw *header);
+					 const CamelNameValueArray *headers);
 	CamelMessageInfo *
 			(*message_info_new_from_parser)
 					(CamelFolderSummary *summary,
@@ -189,9 +189,9 @@ void		camel_folder_summary_touch	(CamelFolderSummary *summary);
 
 /* Just build raw summary items */
 CamelMessageInfo *
-		camel_folder_summary_info_new_from_header
+		camel_folder_summary_info_new_from_headers
 						(CamelFolderSummary *summary,
-						 CamelHeaderRaw *headers);
+						 const CamelNameValueArray *headers);
 CamelMessageInfo *
 		camel_folder_summary_info_new_from_parser
 						(CamelFolderSummary *summary,
@@ -211,7 +211,8 @@ gboolean	camel_folder_summary_remove	(CamelFolderSummary *summary,
 
 gboolean	camel_folder_summary_remove_uid	(CamelFolderSummary *summary,
 						 const gchar *uid);
-gboolean	camel_folder_summary_remove_uids (CamelFolderSummary *summary,
+gboolean	camel_folder_summary_remove_uids
+						(CamelFolderSummary *summary,
 						 GList *uids);
 
 /* remove all items */
@@ -263,9 +264,9 @@ gboolean	camel_system_flag_get		(CamelMessageFlags flags,
 						 const gchar *name);
 
 CamelMessageInfo *
-		camel_message_info_new_from_header
+		camel_message_info_new_from_headers
 						(CamelFolderSummary *summary,
-						 CamelHeaderRaw *header);
+						 const CamelNameValueArray *headers);
 G_END_DECLS
 
 #endif /* CAMEL_FOLDER_SUMMARY_H */

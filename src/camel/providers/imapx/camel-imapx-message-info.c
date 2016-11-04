@@ -415,7 +415,7 @@ camel_imapx_message_info_take_server_user_tags (CamelIMAPXMessageInfo *imi,
 
 	camel_message_info_property_lock (mi);
 
-	changed = !camel_name_value_array_equal (imi->priv->server_user_tags, server_user_tags, TRUE);
+	changed = !camel_name_value_array_equal (imi->priv->server_user_tags, server_user_tags, CAMEL_COMPARE_CASE_SENSITIVE);
 
 	if (changed) {
 		camel_name_value_array_free (imi->priv->server_user_tags);

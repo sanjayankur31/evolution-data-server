@@ -57,8 +57,8 @@ CamelMessageContentInfo *
 		camel_message_content_info_new	(void);
 void		camel_message_content_info_free	(CamelMessageContentInfo *ci);
 CamelMessageContentInfo *
-		camel_message_content_info_new_from_header
-						(CamelHeaderRaw *header);
+		camel_message_content_info_new_from_headers
+						(const CamelNameValueArray *headers);
 CamelMessageContentInfo *
 		camel_message_content_info_new_from_parser
 						(CamelMimeParser *parser);

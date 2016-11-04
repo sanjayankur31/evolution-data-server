@@ -275,7 +275,9 @@ camel_named_flags_get (const CamelNamedFlags *named_flags,
 	const GPtrArray *arr = (const GPtrArray *) named_flags;
 
 	g_return_val_if_fail (named_flags != NULL, NULL);
-	g_return_val_if_fail (index < camel_named_flags_get_length (named_flags), NULL);
+
+	if (index >= camel_named_flags_get_length (named_flags))
+		return NULL;
 
 	return g_ptr_array_index (arr, index);
 }

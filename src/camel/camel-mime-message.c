@@ -1224,7 +1224,7 @@ static const gchar tz_days[][4] = {
 gchar *
 camel_mime_message_build_mbox_from (CamelMimeMessage *message)
 {
-	CamelHeaderRaw *header = ((CamelMimePart *) message)->headers;
+	const CamelNameValueArray *headers;
 	GString *out = g_string_new ("From ");
 	gchar *ret;
 	const gchar *tmp;
@@ -1232,9 +1232,10 @@ camel_mime_message_build_mbox_from (CamelMimeMessage *message)
 	gint offset;
 	struct tm tm;
 
-	tmp = camel_header_raw_find (&header, "Sender", NULL);
+	headers = camel_medium_get_headers (CAMEL_MEDIUM (message));
+	tmp = camel_name_value_array_get_named (headers, CAMEL_COMPARE_CASE_INSENSITIVE, "Sender");
 	if (tmp == NULL)
-		tmp = camel_header_raw_find (&header, "From", NULL);
+		tmp = camel_name_value_array_get_named (headers, CAMEL_COMPARE_CASE_INSENSITIVE, "From");
 	if (tmp != NULL) {
 		CamelHeaderAddress *addr = camel_header_address_decode (tmp, NULL);
 
@@ -1252,7 +1253,7 @@ camel_mime_message_build_mbox_from (CamelMimeMessage *message)
 		g_string_append (out, "unknown@nodomain.now.au");
 
 	/* try use the received header to get the date */
-	tmp = camel_header_raw_find (&header, "Received", NULL);
+	tmp = camel_name_value_array_get_named (headers, CAMEL_COMPARE_CASE_INSENSITIVE, "Received");
 	if (tmp) {
 		tmp = strrchr (tmp, ';');
 		if (tmp)
@@ -1261,7 +1262,7 @@ camel_mime_message_build_mbox_from (CamelMimeMessage *message)
 
 	/* if there isn't one, try the Date field */
 	if (tmp == NULL)
-		tmp = camel_header_raw_find (&header, "Date", NULL);
+		tmp = camel_name_value_array_get_named (headers, CAMEL_COMPARE_CASE_INSENSITIVE, "Date");
 
 	thetime = camel_header_decode_date (tmp, &offset);
 	thetime += ((offset / 100) * (60 * 60)) + (offset % 100) * 60;

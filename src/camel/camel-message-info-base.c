@@ -209,7 +209,7 @@ message_info_base_get_user_tag (const CamelMessageInfo *mi,
 
 	camel_message_info_property_lock (mi);
 	if (bmi->priv->user_tags)
-		result = camel_name_value_array_get_named (bmi->priv->user_tags, TRUE, name);
+		result = camel_name_value_array_get_named (bmi->priv->user_tags, CAMEL_COMPARE_CASE_SENSITIVE, name);
 	else
 		result = NULL;
 	camel_message_info_property_unlock (mi);
@@ -235,9 +235,9 @@ message_info_base_set_user_tag (CamelMessageInfo *mi,
 		bmi->priv->user_tags = camel_name_value_array_new ();
 
 	if (value)
-		changed = camel_name_value_array_set_named (bmi->priv->user_tags, TRUE, name, value);
+		changed = camel_name_value_array_set_named (bmi->priv->user_tags, CAMEL_COMPARE_CASE_SENSITIVE, name, value);
 	else
-		changed = camel_name_value_array_remove_named (bmi->priv->user_tags, TRUE, name, FALSE);
+		changed = camel_name_value_array_remove_named (bmi->priv->user_tags, CAMEL_COMPARE_CASE_SENSITIVE, name, FALSE);
 	camel_message_info_property_unlock (mi);
 
 	return changed;
@@ -290,7 +290,7 @@ message_info_base_take_user_tags (CamelMessageInfo *mi,
 
 	camel_message_info_property_lock (mi);
 
-	changed = !camel_name_value_array_equal (bmi->priv->user_tags, user_tags, TRUE);
+	changed = !camel_name_value_array_equal (bmi->priv->user_tags, user_tags, CAMEL_COMPARE_CASE_SENSITIVE);
 
 	if (changed) {
 		camel_name_value_array_free (bmi->priv->user_tags);
@@ -775,7 +775,7 @@ message_info_base_take_headers (CamelMessageInfo *mi,
 
 	camel_message_info_property_lock (mi);
 
-	changed = !camel_name_value_array_equal (bmi->priv->headers, headers, TRUE);
+	changed = !camel_name_value_array_equal (bmi->priv->headers, headers, CAMEL_COMPARE_CASE_SENSITIVE);
 
 	if (changed) {
 		camel_name_value_array_free (bmi->priv->headers);

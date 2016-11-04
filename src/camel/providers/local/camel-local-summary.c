@@ -44,8 +44,8 @@ static gboolean	summary_header_load		(CamelFolderSummary *,
 						 CamelFIRecord *);
 
 static CamelMessageInfo *
-		message_info_new_from_header	(CamelFolderSummary *,
-						 CamelHeaderRaw *);
+		message_info_new_from_headers	(CamelFolderSummary *,
+						 const CamelNameValueArray *);
 
 static gint	local_summary_decode_x_evolution
 						(CamelLocalSummary *cls,
@@ -119,7 +119,7 @@ camel_local_summary_class_init (CamelLocalSummaryClass *class)
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
 	folder_summary_class->summary_header_load = summary_header_load;
 	folder_summary_class->summary_header_save = summary_header_save;
-	folder_summary_class->message_info_new_from_header = message_info_new_from_header;
+	folder_summary_class->message_info_new_from_headers = message_info_new_from_headers;
 
 	class->load = local_summary_load;
 	class->check = local_summary_check;
@@ -373,7 +373,7 @@ camel_local_summary_add (CamelLocalSummary *cls,
 /**
  * camel_local_summary_write_headers:
  * @fd:
- * @header:
+ * @headers:
  * @xevline:
  * @status:
  * @xstatus:
@@ -387,13 +387,15 @@ camel_local_summary_add (CamelLocalSummary *cls,
  **/
 gint
 camel_local_summary_write_headers (gint fd,
-                                   CamelHeaderRaw *header,
+                                   CamelNameValueArray *headers,
                                    const gchar *xevline,
                                    const gchar *status,
                                    const gchar *xstatus)
 {
 	gint outlen = 0, len;
 	gint newfd;
+	guint ii;
+	const gchar *header_name = NULL, *header_value = NULL;
 	FILE *out;
 
 	/* dum de dum, maybe the whole sync function should just use stdio for output */
@@ -408,18 +410,17 @@ camel_local_summary_write_headers (gint fd,
 		return -1;
 	}
 
-	while (header) {
-		if (strcmp (header->name, "X-Evolution") != 0
-		    && (status == NULL || strcmp (header->name, "Status") != 0)
-		    && (xstatus == NULL || strcmp (header->name, "X-Status") != 0)) {
-			len = fprintf (out, "%s:%s\n", header->name, header->value);
+	for (ii = 0; camel_name_value_array_get (headers, ii, &header_name, &header_value); ii++) {
+		if (strcmp (header_name, "X-Evolution") != 0
+		    && (status == NULL || strcmp (header_name, "Status") != 0)
+		    && (xstatus == NULL || strcmp (header_name, "X-Status") != 0)) {
+			len = fprintf (out, "%s:%s\n", header_name, header_value);
 			if (len == -1) {
 				fclose (out);
 				return -1;
 			}
 			outlen += len;
 		}
-		header = header->next;
 	}
 
 	if (status) {
@@ -729,22 +730,22 @@ summary_header_save (CamelFolderSummary *s,
 }
 
 static CamelMessageInfo *
-message_info_new_from_header (CamelFolderSummary *s,
-                              CamelHeaderRaw *h)
+message_info_new_from_headers (CamelFolderSummary *summary,
+			       const CamelNameValueArray *headers)
 {
 	CamelMessageInfo *mi;
-	CamelLocalSummary *cls = (CamelLocalSummary *) s;
+	CamelLocalSummary *cls = (CamelLocalSummary *) summary;
 
-	mi = CAMEL_FOLDER_SUMMARY_CLASS (camel_local_summary_parent_class)->message_info_new_from_header (s, h);
+	mi = CAMEL_FOLDER_SUMMARY_CLASS (camel_local_summary_parent_class)->message_info_new_from_headers (summary, headers);
 	if (mi) {
 		const gchar *xev;
 		gint doindex = FALSE;
 
-		xev = camel_header_raw_find (&h, "X-Evolution", NULL);
+		xev = camel_name_value_array_get_named (headers, CAMEL_COMPARE_CASE_INSENSITIVE, "X-Evolution");
 		if (xev == NULL || camel_local_summary_decode_x_evolution (cls, xev, mi) == -1) {
 			gchar *uid;
 
-			uid = camel_folder_summary_next_uid_string (s);
+			uid = camel_folder_summary_next_uid_string (summary);
 
 			/* to indicate it has no xev header */
 			camel_message_info_set_flags (mi, CAMEL_MESSAGE_FOLDER_FLAGGED | CAMEL_MESSAGE_FOLDER_NOXEV, CAMEL_MESSAGE_FOLDER_FLAGGED | CAMEL_MESSAGE_FOLDER_NOXEV);
@@ -761,10 +762,10 @@ message_info_new_from_header (CamelFolderSummary *s,
 			|| cls->index_force
 			|| !camel_index_has_name (cls->index, camel_message_info_get_uid (mi)))) {
 			d (printf ("Am indexing message %s\n", camel_message_info_get_uid (mi)));
-			camel_folder_summary_set_index (s, cls->index);
+			camel_folder_summary_set_index (summary, cls->index);
 		} else {
 			d (printf ("Not indexing message %s\n", camel_message_info_get_uid (mi)));
-			camel_folder_summary_set_index (s, NULL);
+			camel_folder_summary_set_index (summary, NULL);
 		}
 	}
 

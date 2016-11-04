@@ -309,7 +309,6 @@ check_header (CamelSExp *sexp,
 		camel_search_t type = CAMEL_SEARCH_TYPE_ASIS;
 		struct _camel_search_words *words;
 		CamelMimeMessage *message = NULL;
-		CamelHeaderRaw *raw_header;
 
 		/* only a subset of headers are supported .. */
 		headername = argv[0]->value.string;
@@ -361,15 +360,20 @@ check_header (CamelSExp *sexp,
 					truth = TRUE;
 					for (j = 0; j < words->len && truth; j++) {
 						if (message) {
-							for (raw_header = ((CamelMimePart *) message)->headers; raw_header; raw_header = raw_header->next) {
+							const CamelNameValueArray *headers = NULL;
+							const gchar *raw_name = NULL, *raw_value = NULL;
+							guint ii;
+
+							headers = camel_medium_get_headers (CAMEL_MEDIUM (message));
+							for (ii = 0; camel_name_value_array_get (headers, ii, &raw_name, &raw_value); ii++) {
 								/* empty name means any header */
-								if (!headername || !*headername || !g_ascii_strcasecmp (raw_header->name, headername)) {
-									if (camel_search_header_match (raw_header->value, words->words[j]->word, how, type, charset))
+								if (!headername || !*headername || !g_ascii_strcasecmp (raw_name, headername)) {
+									if (camel_search_header_match (raw_value, words->words[j]->word, how, type, charset))
 										break;
 								}
 							}
 
-							truth = raw_header != NULL;
+							truth = ii < camel_name_value_array_get_length (headers);
 						} else
 							truth = camel_search_header_match (
 								header,
@@ -379,11 +383,16 @@ check_header (CamelSExp *sexp,
 					camel_search_words_free (words);
 				} else {
 					if (message) {
-						for (raw_header = ((CamelMimePart *) message)->headers; raw_header && !truth; raw_header = raw_header->next) {
+						const CamelNameValueArray *headers = NULL;
+						const gchar *raw_name = NULL, *raw_value = NULL;
+						guint ii;
+
+						headers = camel_medium_get_headers (CAMEL_MEDIUM (message));
+						for (ii = 0; camel_name_value_array_get (headers, ii, &raw_name, &raw_value); ii++) {
 							/* empty name means any header */
-							if (!headername || !*headername || !g_ascii_strcasecmp (raw_header->name, headername)) {
+							if (!headername || !*headername || !g_ascii_strcasecmp (raw_name, headername)) {
 								truth = camel_search_header_match (
-									raw_header->value,
+									raw_value,
 									argv[i]->value.string,
 									how, type, charset);
 							}

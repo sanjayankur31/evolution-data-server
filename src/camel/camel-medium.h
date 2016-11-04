@@ -74,6 +74,8 @@ struct _CamelMediumClass {
 						 const gchar *name);
 	CamelNameValueArray *
 			(*dup_headers)		(CamelMedium *medium);
+	const CamelNameValueArray *
+			(*get_headers)		(CamelMedium *medium);
 	CamelDataWrapper *
 			(*get_content)		(CamelMedium *medium);
 	void		(*set_content)		(CamelMedium *medium,
@@ -96,6 +98,8 @@ const gchar *	camel_medium_get_header		(CamelMedium *medium,
 						 const gchar *name);
 CamelNameValueArray *
 		camel_medium_dup_headers	(CamelMedium *medium);
+const CamelNameValueArray *
+		camel_medium_get_headers	(CamelMedium *medium);
 CamelDataWrapper *
 		camel_medium_get_content	(CamelMedium *medium);
 void		camel_medium_set_content	(CamelMedium *medium,

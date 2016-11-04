@@ -238,7 +238,7 @@ message_info_load (CamelMessageInfo *mi,
 			value = camel_util_bdata_get_string (&part, NULL);
 
 			if (name)
-				camel_name_value_array_set_named (user_tags, TRUE, name, value ? value : "");
+				camel_name_value_array_set_named (user_tags, CAMEL_COMPARE_CASE_SENSITIVE, name, value ? value : "");
 
 			g_free (name);
 			g_free (value);
@@ -2724,8 +2724,8 @@ camel_message_info_set_message_id (CamelMessageInfo *mi,
  * message as an array of guint64 numbers, partial MD5 sums. Each value
  * can be cast to #CamelSummaryMessageID.
  *
- * Returns: (transfer none) (nullable): A #GArray of guint64 encoded
- *   Message-ID-s; or %NULL when none are available.
+ * Returns: (transfer none) (nullable) (element-type guint64): A #GArray of
+ *   guint64 encoded Message-ID-s; or %NULL when none are available.
  *
  * Since: 3.24
  **/
@@ -2756,9 +2756,9 @@ camel_message_info_get_references (const CamelMessageInfo *mi)
  * message as an array of guint64 numbers, partial MD5 sums. Each value
  * can be cast to #CamelSummaryMessageID.
  *
- * Returns: (transfer full) (nullable): A #GArray of guint64 encoded
- *   Message-ID-s; or %NULL when none are available. Free returned array
- *   with g_array_unref() when no longer needed.
+ * Returns: (transfer full) (nullable) (element-type guint64): A #GArray of
+ *   guint64 encoded Message-ID-s; or %NULL when none are available. Free returned
+ *   array with g_array_unref() when no longer needed.
  *
  * Since: 3.24
  **/

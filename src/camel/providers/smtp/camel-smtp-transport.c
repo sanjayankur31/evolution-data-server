@@ -1639,13 +1639,15 @@ smtp_data (CamelSmtpTransport *transport,
            GCancellable *cancellable,
            GError **error)
 {
-	CamelHeaderRaw *header, *savedbcc, *n, *tail;
+	CamelNameValueArray *previous_headers;
+	const gchar *header_name = NULL, *header_value = NULL;
 	CamelBestencEncoding enctype = CAMEL_BESTENC_8BIT;
 	CamelStream *filtered_stream;
 	gchar *cmdbuf, *respbuf = NULL;
 	CamelMimeFilter *filter;
 	gsize bytes_written;
 	gint ret;
+	guint ii;
 
 	/* If the server doesn't support 8BITMIME, set our required encoding to be 7bit */
 	if (!(transport->flags & CAMEL_SMTP_TRANSPORT_8BITMIME))
@@ -1694,24 +1696,9 @@ smtp_data (CamelSmtpTransport *transport,
 	g_free (respbuf);
 	respbuf = NULL;
 
-	/* unlink the bcc headers */
-	savedbcc = NULL;
-	tail = (CamelHeaderRaw *) &savedbcc;
-
-	header = (CamelHeaderRaw *) &CAMEL_MIME_PART (message)->headers;
-	n = header->next;
-	while (n != NULL) {
-		if (!g_ascii_strcasecmp (n->name, "Bcc")) {
-			header->next = n->next;
-			tail->next = n;
-			n->next = NULL;
-			tail = n;
-		} else {
-			header = n;
-		}
-
-		n = header->next;
-	}
+	/* unlink the bcc headers and keep a copy of them */
+	previous_headers = camel_medium_dup_headers (CAMEL_MEDIUM (message));
+	camel_medium_remove_header (CAMEL_MEDIUM (message), "Bcc");
 
 	/* find out how large the message is... */
 	bytes_written = camel_data_wrapper_calculate_size_sync (CAMEL_DATA_WRAPPER (message), NULL, NULL);
@@ -1741,7 +1728,13 @@ smtp_data (CamelSmtpTransport *transport,
 		filtered_stream, cancellable, error);
 
 	/* restore the bcc headers */
-	header->next = savedbcc;
+	for (ii = 0; camel_name_value_array_get (previous_headers, ii, &header_name, &header_value); ii++) {
+		if (!g_ascii_strcasecmp (header_name, "Bcc")) {
+			camel_medium_add_header (CAMEL_MEDIUM (message), header_name, header_value);
+		}
+	}
+
+	camel_name_value_array_free (previous_headers);
 
 	if (ret == -1) {
 		g_prefix_error (error, _("DATA command failed: "));

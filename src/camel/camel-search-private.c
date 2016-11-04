@@ -831,14 +831,14 @@ camel_search_get_all_headers_decoded (CamelMimeMessage *message)
 {
 	CamelMedium *medium;
 	GString *str;
-	CamelNameValueArray *headers;
+	const CamelNameValueArray *headers;
 	const gchar *default_charset;
 	guint ii, length;
 
 	g_return_val_if_fail (CAMEL_IS_MIME_MESSAGE (message), NULL);
 
 	medium = CAMEL_MEDIUM (message);
-	headers = camel_medium_dup_headers (medium);
+	headers = camel_medium_get_headers (medium);
 	if (!headers)
 		return NULL;
 
@@ -871,8 +871,6 @@ camel_search_get_all_headers_decoded (CamelMimeMessage *message)
 
 		g_free (content);
 	}
-
-	camel_name_value_array_free (headers);
 
 	return g_string_free (str, FALSE);
 }

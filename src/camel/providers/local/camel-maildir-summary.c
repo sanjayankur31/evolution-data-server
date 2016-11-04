@@ -48,8 +48,8 @@
 #define CAMEL_MAILDIR_SUMMARY_VERSION (0x2000)
 
 static CamelMessageInfo *
-		message_info_new_from_header	(CamelFolderSummary *,
-						 CamelHeaderRaw *);
+		message_info_new_from_headers	(CamelFolderSummary *,
+						 const CamelNameValueArray *);
 static gint	maildir_summary_load		(CamelLocalSummary *cls,
 						 gint forceindex,
 						 GError **error);
@@ -127,7 +127,7 @@ camel_maildir_summary_class_init (CamelMaildirSummaryClass *class)
 	folder_summary_class->message_info_type = CAMEL_TYPE_MAILDIR_MESSAGE_INFO;
 	folder_summary_class->sort_by = "dreceived";
 	folder_summary_class->collate = NULL;
-	folder_summary_class->message_info_new_from_header = message_info_new_from_header;
+	folder_summary_class->message_info_new_from_headers = message_info_new_from_headers;
 	folder_summary_class->next_uid_string = maildir_summary_next_uid_string;
 
 	local_summary_class = CAMEL_LOCAL_SUMMARY_CLASS (class);
@@ -306,26 +306,26 @@ maildir_summary_add (CamelLocalSummary *cls,
 }
 
 static CamelMessageInfo *
-message_info_new_from_header (CamelFolderSummary *s,
-                              CamelHeaderRaw *h)
+message_info_new_from_headers (CamelFolderSummary *summary,
+			       const CamelNameValueArray *headers)
 {
 	CamelMessageInfo *mi, *info;
-	CamelMaildirSummary *mds = (CamelMaildirSummary *) s;
+	CamelMaildirSummary *mds = (CamelMaildirSummary *) summary;
 	const gchar *uid;
 
-	mi = ((CamelFolderSummaryClass *) camel_maildir_summary_parent_class)->message_info_new_from_header (s, h);
+	mi = ((CamelFolderSummaryClass *) camel_maildir_summary_parent_class)->message_info_new_from_headers (summary, headers);
 	/* assign the uid and new filename */
 	if (mi) {
 		uid = camel_message_info_get_uid (mi);
 		if (uid == NULL || uid[0] == 0) {
-			gchar *new_uid = camel_folder_summary_next_uid_string (s);
+			gchar *new_uid = camel_folder_summary_next_uid_string (summary);
 
 			camel_message_info_set_uid (mi, new_uid);
 			g_free (new_uid);
 		}
 
 		/* handle 'duplicates' */
-		info = (uid && *uid) ? camel_folder_summary_peek_loaded (s, uid) : NULL;
+		info = (uid && *uid) ? camel_folder_summary_peek_loaded (summary, uid) : NULL;
 		if (info) {
 			d (printf ("already seen uid '%s', just summarising instead\n", uid));
 			g_clear_object (&mi);

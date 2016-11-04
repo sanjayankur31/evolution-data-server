@@ -501,8 +501,11 @@ folder_transfer_message_to (CamelFolder *source,
 	    && (minfo = camel_folder_get_message_info (source, uid))) {
 		info = camel_message_info_clone (minfo, NULL);
 		g_clear_object (&minfo);
-	} else
-		info = camel_message_info_new_from_header (NULL, ((CamelMimePart *) msg)->headers);
+	} else {
+		const CamelNameValueArray *headers = camel_medium_get_headers (CAMEL_MEDIUM (msg));
+
+		info = camel_message_info_new_from_headers (NULL, headers);
+	}
 
 	/* unset deleted flag when transferring from trash folder */
 	if ((source_folder_flags & CAMEL_FOLDER_IS_TRASH) != 0)

@@ -256,7 +256,7 @@ camel_medium_remove_header (CamelMedium *medium,
  *
  * If the header occurs more than once, only retrieve the first
  * instance of the header.  For multi-occuring headers, use
- * camel_medium_dup_headers().
+ * camel_medium_dup_headers() or camel_medium_get_headers().
  *
  * Returns: (nullable): the value of the named header, or %NULL
  **/
@@ -281,8 +281,11 @@ camel_medium_get_header (CamelMedium *medium,
  *
  * Gets an array of all header name/value pairs. The values will be
  * decoded to UTF-8 for any headers that are recognized by Camel.
+ * See also camel_medium_get_headers().
  *
  * Returns: (transfer full): the array of headers, which must be freed with camel_name_value_array_free().
+ *
+ * Since: 3.24
  **/
 CamelNameValueArray *
 camel_medium_dup_headers (CamelMedium *medium)
@@ -295,6 +298,31 @@ camel_medium_dup_headers (CamelMedium *medium)
 	g_return_val_if_fail (class->dup_headers != NULL, NULL);
 
 	return class->dup_headers (medium);
+}
+
+/**
+ * camel_medium_get_headers:
+ * @medium: a #CamelMedium object
+ *
+ * Gets an array of all header name/value pairs. The values will be
+ * decoded to UTF-8 for any headers that are recognized by Camel.
+ * See also camel_medium_dup_headers().
+ *
+ * Returns: (transfer none): the array of headers, owned by @medium.
+ *
+ * Since: 3.24
+ **/
+const CamelNameValueArray *
+camel_medium_get_headers (CamelMedium *medium)
+{
+	CamelMediumClass *class;
+
+	g_return_val_if_fail (CAMEL_IS_MEDIUM (medium), NULL);
+
+	class = CAMEL_MEDIUM_GET_CLASS (medium);
+	g_return_val_if_fail (class->get_headers != NULL, NULL);
+
+	return class->get_headers (medium);
 }
 
 /**
