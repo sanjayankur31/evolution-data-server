@@ -1300,6 +1300,7 @@ camel_folder_class_init (CamelFolderClass *class)
 	/**
 	 * CamelFolder::changed
 	 * @folder: the #CamelFolder which emitted the signal
+	 * @changes: the #CamelFolderChangeInfo with the list of changes
 	 **/
 	signals[CHANGED] = g_signal_new (
 		"changed",
@@ -1308,7 +1309,7 @@ camel_folder_class_init (CamelFolderClass *class)
 		G_STRUCT_OFFSET (CamelFolderClass, changed),
 		NULL, NULL, NULL,
 		G_TYPE_NONE, 1,
-		G_TYPE_POINTER);
+		CAMEL_TYPE_FOLDER_CHANGE_INFO);
 
 	/**
 	 * CamelFolder::deleted
@@ -2670,22 +2671,6 @@ camel_folder_quota_info_free (CamelFolderQuotaInfo *info)
 		g_free (info->name);
 		g_free (info);
 	}
-}
-
-/**
- * camel_folder_free_nop:
- * @folder: a #CamelFolder
- * @array: an array of uids or #CamelMessageInfo
- *
- * "Frees" the provided array by doing nothing. Used by #CamelFolder
- * subclasses as an implementation for free_uids, or free_summary when
- * the returned array is "static" information and should not be freed.
- **/
-void
-camel_folder_free_nop (CamelFolder *folder,
-                       GPtrArray *array)
-{
-	;
 }
 
 /**

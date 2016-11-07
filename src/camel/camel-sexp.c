@@ -199,7 +199,7 @@ camel_sexp_error (CamelSExp *sexp)
 }
 
 /**
- * camel_sexp_result_new:
+ * camel_sexp_result_new: (skip)
  *
  * Since: 3.4
  **/
@@ -768,7 +768,7 @@ term_eval_begin (CamelSExp *sexp,
 }
 
 /**
- * camel_sexp_term_eval:
+ * camel_sexp_term_eval: (skip)
  *
  * Since: 3.4
  **/
@@ -1288,7 +1288,7 @@ parse_values (CamelSExp *sexp,
 }
 
 /**
- * camel_sexp_parse_value:
+ * camel_sexp_parse_value: (skip)
  *
  * Since: 3.4
  **/
@@ -1729,7 +1729,7 @@ camel_sexp_parse (CamelSExp *sexp)
 }
 
 /**
- * camel_sexp_eval:
+ * camel_sexp_eval: (skip)
  *
  * Since: 3.4
  **/

@@ -650,7 +650,7 @@ thread_summary (CamelFolderThread *thread,
 }
 
 /**
- * camel_folder_thread_messages_new:
+ * camel_folder_thread_messages_new: (skip)
  * @folder:
  * @uids: (element-type utf8): The subset of uid's to thread.  If NULL. then thread all
  * uid's in @folder.

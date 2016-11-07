@@ -151,7 +151,7 @@ wref_free_func (gpointer p)
 }
 
 /**
- * camel_object_bag_new:
+ * camel_object_bag_new: (skip)
  * @key_hash_func: (scope call): a hashing function for keys
  * @key_equal_func: (scope call): a comparison function for keys
  * @key_copy_func: (scope call): a function to copy keys

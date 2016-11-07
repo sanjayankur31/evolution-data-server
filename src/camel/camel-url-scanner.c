@@ -32,6 +32,11 @@ struct _CamelUrlScanner {
 	CamelTrie *trie;
 };
 
+/**
+ * camel_url_scanner_new: (skip)
+ *
+ * Returns: (transfer full): Creates a new #CamelUrlScanner
+ **/
 CamelUrlScanner *
 camel_url_scanner_new (void)
 {
@@ -44,6 +49,12 @@ camel_url_scanner_new (void)
 	return scanner;
 }
 
+/**
+ * camel_url_scanner_free: (skip)
+ * @scanner: a #CamelUrlScanner
+ *
+ * Frees the @scanner.
+ **/
 void
 camel_url_scanner_free (CamelUrlScanner *scanner)
 {
@@ -54,6 +65,13 @@ camel_url_scanner_free (CamelUrlScanner *scanner)
 	g_free (scanner);
 }
 
+/**
+ * camel_url_scanner_add: (skip)
+ * @scanner: a #CamelUrlScanner
+ * @pattern: a #CamelUrlPattern to add
+ *
+ * Adds a new @pattern into the scanner
+ **/
 void
 camel_url_scanner_add (CamelUrlScanner *scanner,
                        CamelUrlPattern *pattern)
@@ -65,7 +83,7 @@ camel_url_scanner_add (CamelUrlScanner *scanner,
 }
 
 /**
- * camel_url_scanner_scan:
+ * camel_url_scanner_scan: (skip)
  * @scanner: a #CamelUrlScanner object.
  * @in: (array length=inlen) (type gchar): the url to scan.
  * @inlen: length of the in array.

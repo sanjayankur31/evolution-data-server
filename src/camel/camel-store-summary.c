@@ -396,7 +396,7 @@ camel_store_summary_array_free (CamelStoreSummary *summary,
 }
 
 /**
- * camel_store_summary_path:
+ * camel_store_summary_path: (skip)
  * @summary: a #CamelStoreSummary object
  * @path: path to the item
  *
@@ -615,13 +615,13 @@ camel_store_summary_add (CamelStoreSummary *summary,
 }
 
 /**
- * camel_store_summary_add_from_path:
+ * camel_store_summary_add_from_path: (skip)
  * @summary: a #CamelStoreSummary object
  * @path: item path
  *
  * Build a new info record based on the name, and add it to the summary.
  *
- * Returns: the newly added record
+ * Returns: (transfer none): the newly added record
  **/
 CamelStoreInfo *
 camel_store_summary_add_from_path (CamelStoreSummary *summary,
@@ -657,13 +657,13 @@ camel_store_summary_add_from_path (CamelStoreSummary *summary,
 }
 
 /**
- * camel_store_summary_info_ref:
+ * camel_store_summary_info_ref: (skip)
  * @summary: a #CamelStoreSummary object
  * @info: a #CamelStoreInfo
  *
  * Add an extra reference to @info.
  *
- * Returns: the @info argument
+ * Returns: (transfer full): the @info argument
  **/
 CamelStoreInfo *
 camel_store_summary_info_ref (CamelStoreSummary *summary,
@@ -772,7 +772,7 @@ camel_store_summary_remove_path (CamelStoreSummary *summary,
 }
 
 /**
- * camel_store_summary_info_new:
+ * camel_store_summary_info_new: (skip)
  * @summary: a #CamelStoreSummary object
  *
  * Allocate a new #CamelStoreInfo, suitable for adding to this

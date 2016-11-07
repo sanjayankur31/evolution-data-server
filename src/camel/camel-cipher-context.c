@@ -1179,6 +1179,13 @@ camel_cipher_validity_add_certinfo (CamelCipherValidity *vin,
 
 /**
  * camel_cipher_validity_add_certinfo_ex:
+ * @vin: a #CamelCipherValidity
+ * @mode: a #CamelCipherValidityMode, where to add the additional certificate information
+ * @name: a name to add
+ * @email: an e-mail address to add
+ * @cert_data: (nullable) (destroy cert_data_free): a certificate data, or %NULL
+ * @cert_data_free: (nullable): a destroy function for @cert_data; required, when @cert_data is not %NULL
+ * @cert_data_clone: (nullable) (scope call): a copy function for @cert_data, to copy the data; required, when @cert_data is not %NULL
  *
  * Add a cert info to the signer or encrypter info, with extended data set.
  *
@@ -1270,9 +1277,9 @@ camel_cipher_validity_get_certinfo_property (CamelCipherValidity *vin,
  * @mode: which cipher validity part to use
  * @info_index: a 0-based index of the requested #CamelCipherCertInfo
  * @name: a property name
- * @value: (nullable): a property value, or %NULL
+ * @value: (nullable) (destroy value_free): a property value, or %NULL
  * @value_free: (nullable): a free function for the @value
- * @value_clone: (nullable): a clone function for the @value
+ * @value_clone: (nullable) (scope call): a clone function for the @value
  *
  * Sets a named property @name value @value for the given @info_index
  * of the @mode validity part. If the @value is %NULL, then the property
@@ -1428,9 +1435,9 @@ camel_cipher_certinfo_get_property (CamelCipherCertInfo *cert_info,
  * camel_cipher_certinfo_set_property:
  * @cert_info: a #CamelCipherCertInfo
  * @name: a property name
- * @value: (nullable): a property value, or %NULL
+ * @value: (nullable) (destroy value_free): a property value, or %NULL
  * @value_free: (nullable): a free function for the @value
- * @value_clone: (nullable): a clone function for the @value
+ * @value_clone: (nullable) (scope call): a clone function for the @value
  *
  * Sets a named property @name value @value for the given @cert_info.
  * If the @value is %NULL, then the property is removed. With a non-%NULL

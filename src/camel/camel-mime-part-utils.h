@@ -53,8 +53,12 @@ struct _CamelMessageContentInfo {
 	guint32 size;
 };
 
+GType		camel_message_content_info_get_type
+						(void) G_GNUC_CONST;
 CamelMessageContentInfo *
 		camel_message_content_info_new	(void);
+CamelMessageContentInfo *
+		camel_message_content_info_copy	(const CamelMessageContentInfo *src);
 void		camel_message_content_info_free	(CamelMessageContentInfo *ci);
 CamelMessageContentInfo *
 		camel_message_content_info_new_from_headers

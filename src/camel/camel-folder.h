@@ -49,6 +49,8 @@
 	(G_TYPE_INSTANCE_GET_CLASS \
 	((obj), CAMEL_TYPE_FOLDER, CamelFolderClass))
 
+#define CAMEL_TYPE_FOLDER_CHANGE_INFO (camel_folder_change_info_get_type ())
+
 /**
  * CAMEL_FOLDER_ERROR:
  *
@@ -380,8 +382,6 @@ CamelFolderQuotaInfo *
 CamelFolderQuotaInfo *
 		camel_folder_quota_info_clone	(const CamelFolderQuotaInfo *info);
 void		camel_folder_quota_info_free	(CamelFolderQuotaInfo *info);
-void		camel_folder_free_nop		(CamelFolder *folder,
-						 GPtrArray *array);
 void		camel_folder_free_shallow	(CamelFolder *folder,
 						 GPtrArray *array);
 void		camel_folder_free_deep		(CamelFolder *folder,

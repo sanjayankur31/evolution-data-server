@@ -46,6 +46,9 @@
  *
  * A small issue is that case-insenstivity won't work entirely correct
  * for utf8 strings. */
+/**
+ * camel_search_build_match_regex: (skip)
+ **/
 gint
 camel_search_build_match_regex (regex_t *pattern,
                                 camel_search_flags_t type,
@@ -500,6 +503,9 @@ camel_search_header_match (const gchar *value,
 
 /* Performs a 'slow' content-based match. */
 /* There is also an identical copy of this in camel-filter-search.c. */
+/**
+ * camel_search_message_body_contains: (skip)
+ **/
 gboolean
 camel_search_message_body_contains (CamelDataWrapper *object,
                                     regex_t *pattern)

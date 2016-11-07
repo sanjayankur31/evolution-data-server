@@ -47,6 +47,42 @@ static GRecMutex provider_lock;
 #define LOCK()		(g_rec_mutex_lock(&provider_lock))
 #define UNLOCK()	(g_rec_mutex_unlock(&provider_lock))
 
+CamelProvider *	camel_provider_copy		(CamelProvider *provider);
+void		camel_provider_free		(CamelProvider *provider);
+
+G_DEFINE_BOXED_TYPE (CamelProvider, camel_provider, camel_provider_copy, camel_provider_free)
+
+/*
+ * camel_provider_copy:
+ * @provider: a #CamelProvider to copy
+ *
+ * The function returns @provider, because providers are not allocated
+ * on heap. It's defined only for the introspection purposes.
+ *
+ * Returns: (transfer full): the @provider
+ *
+ * Since: 3.24
+ */
+CamelProvider *
+camel_provider_copy (CamelProvider *provider)
+{
+	return provider;
+}
+
+/*
+ * camel_provider_free:
+ * @provider: a #CamelProvider to copy
+ *
+ * The function does nothing, because providers are not allocated
+ * on heap. It's defined only for the introspection purposes.
+ *
+ * Since: 3.24
+ */
+void
+camel_provider_free (CamelProvider *provider)
+{
+}
+
 /* The vfolder provider is always available */
 static CamelProvider vee_provider = {
 	"vfolder",

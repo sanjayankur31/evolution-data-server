@@ -303,7 +303,7 @@ camel_stream_fs_new_with_fd (gint fd)
  * camel_stream_fs_new_with_name:
  * @name: a local filename
  * @flags: flags as in open(2)
- * @mode: a file mode
+ * @mode: (type guint32): a file mode
  * @error: return location for a #GError, or %NULL
  *
  * Creates a new #CamelStreamFs corresponding to the named file, flags,

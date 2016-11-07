@@ -440,7 +440,7 @@ camel_block_file_get_root_block (CamelBlockFile *bs)
  * camel_block_file_get_cache_limit:
  * @bs: a #CamelBlockFile
  *
- * Returns: (transfer none): Current block cache limit of @bs.
+ * Returns: Current block cache limit of @bs.
  *
  * Since: 3.24
  **/
@@ -531,7 +531,7 @@ camel_block_file_delete (CamelBlockFile *bs)
 }
 
 /**
- * camel_block_file_new_block:
+ * camel_block_file_new_block: (skip)
  * @bs:
  *
  * Allocate a new block, return a pointer to it.  Old blocks
@@ -603,7 +603,7 @@ camel_block_file_free_block (CamelBlockFile *bs,
 }
 
 /**
- * camel_block_file_get_block:
+ * camel_block_file_get_block: (skip)
  * @bs:
  * @id:
  *

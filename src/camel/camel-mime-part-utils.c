@@ -151,18 +151,68 @@ camel_mime_part_construct_content_from_parser (CamelMimePart *dw,
 	return success;
 }
 
+G_DEFINE_BOXED_TYPE (CamelMessageContentInfo,
+		camel_message_content_info,
+		camel_message_content_info_copy,
+		camel_message_content_info_free)
 
 /**
  * camel_message_content_info_new:
  *
  * Allocate a new #CamelMessageContentInfo.
  *
- * Returns: a newly allocated #CamelMessageContentInfo
+ * Returns: (transfer full): a newly allocated #CamelMessageContentInfo
  **/
 CamelMessageContentInfo *
 camel_message_content_info_new (void)
 {
 	return g_slice_alloc0 (sizeof (CamelMessageContentInfo));
+}
+
+/**
+ * camel_message_content_info_copy:
+ * @src: (nullable): a source #CamelMessageContentInfo to copy
+ *
+ * Returns: a copy of @src, or %NULL, if @src was %NULL
+ *
+ * Since: 3.24
+ **/
+CamelMessageContentInfo *
+camel_message_content_info_copy (const CamelMessageContentInfo *src)
+{
+	CamelMessageContentInfo *res;
+
+	if (!src)
+		return NULL;
+
+	res = camel_message_content_info_new ();
+
+	if (src->type) {
+		gchar *content_type;
+
+		content_type = camel_content_type_format (src->type);
+		res->type = camel_content_type_decode (content_type);
+
+		g_free (content_type);
+	}
+
+	res->id = g_strdup (src->id);
+	res->description = g_strdup (src->description);
+	res->encoding = g_strdup (src->encoding);
+	res->size = src->size;
+
+	res->next = camel_message_content_info_copy (src->next);
+	res->childs = camel_message_content_info_copy (src->childs);
+
+	if (res->childs) {
+		CamelMessageContentInfo *child;
+
+		for (child = res->childs; child; child = child->next) {
+			child->parent = res;
+		}
+	}
+
+	return res;
 }
 
 /**

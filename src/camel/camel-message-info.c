@@ -2790,7 +2790,7 @@ camel_message_info_dup_references (const CamelMessageInfo *mi)
 /**
  * camel_message_info_take_references:
  * @mi: a #CamelMessageInfo
- * @references: (transfer full) (nullable): a references to set
+ * @references: (element-type guint64) (transfer full) (nullable): a references to set
  *
  * Takes encoded In-Reply-To and References headers of the associated message
  * as an array of guint64 numbers, partial MD5 sums. Each value can be
